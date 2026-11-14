@@ -24,6 +24,7 @@ The report shows pass rate and token use for successful tasks separately. Its pe
 
 The test harness refuses to run if a global `nixskill` installation could contaminate the baseline. Generated runs are stored under `evals/results/`, which Git ignores.
 If an environment blocks command execution inside Codex, the runner stops and labels the run as an infrastructure error; those token counts cannot be used as evidence. Run the harness only where both variants can edit and test their isolated workspaces.
+Pull requests run the benchmark's offline tests in GitHub Actions. CI does not launch Codex or claim token savings.
 
 ## Optional Langfuse telemetry
 
