@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { traceStats } from './benchmark.mjs';
+import { resolveCodex, traceStats } from './benchmark.mjs';
 
 const evalDir = dirname(fileURLToPath(import.meta.url));
 const resultsDir = join(evalDir, 'results');
@@ -134,6 +134,28 @@ test('skill read requires a successful command returning skill content', () => {
     assert.equal(traceStats(tracePath).skillRead, false);
     writeFileSync(tracePath, `${event(0, 'Use a small, evidence-led working set.')}\n`);
     assert.equal(traceStats(tracePath).skillRead, true);
+  } finally {
+    const target = resolve(workdir);
+    if (!target.startsWith(resolve(resultsDir) + sep)) throw new Error('Unsafe cleanup path');
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
+test('npm Windows shim launches the package entrypoint without a shell', () => {
+  mkdirSync(resultsDir, { recursive: true });
+  const workdir = mkdtempSync(join(resultsDir, 'codex-shim-test-'));
+  try {
+    const packageDir = join(workdir, 'node_modules', '@openai', 'codex');
+    mkdirSync(join(packageDir, 'bin'), { recursive: true });
+    const shim = join(workdir, 'codex.cmd');
+    writeFileSync(shim, '@echo off\n');
+    writeFileSync(join(packageDir, 'package.json'), JSON.stringify({ name: '@openai/codex', bin: { codex: 'bin/codex.js' } }));
+    writeFileSync(join(packageDir, 'bin', 'codex.js'), "console.log('fake-codex 1');\n");
+    const launch = resolveCodex(shim);
+    assert.equal(launch.executable, process.execPath);
+    assert.deepEqual(launch.prefixArgs, [join(packageDir, 'bin', 'codex.js')]);
+    assert.equal(launch.version, 'fake-codex 1');
+    assert.equal(launch.kind, 'npm');
   } finally {
     const target = resolve(workdir);
     if (!target.startsWith(resolve(resultsDir) + sep)) throw new Error('Unsafe cleanup path');

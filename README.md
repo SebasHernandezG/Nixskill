@@ -14,6 +14,8 @@ Requirements: Codex CLI signed in, Node.js 20 or later, and Git. Runs use your C
 node evals/benchmark.mjs run --model gpt-6.1-sol --effort medium --repeats 1 --case revenue
 ```
 
+On Windows, the runner looks for `codex.exe` in `PATH`, the Codex desktop app, or the standard npm `codex.cmd` package. If it cannot find one, pass its path with `--codex "C:\path\to\codex.exe"` or set `NIXSKILL_CODEX_BIN`. The same resolved executable is used for the version check and both benchmark variants.
+
 The command prints the run directory. Open its `report.html` in a browser. One repetition is a descriptive pilot and cannot support a token savings claim. After it succeeds, run the full suite with an even number of repeats so each variant runs first equally often:
 
 ```powershell

@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync, createWriteStream } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, extname, join, resolve } from 'node:path';
 import { finished } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -12,7 +12,7 @@ const skillDir = join(repoDir, 'skills', 'nixskill');
 const cases = JSON.parse(readFileSync(join(evalDir, 'cases.json'), 'utf8'));
 
 function usage() {
-  console.error('Usage: node evals/benchmark.mjs run --model <id> [--effort medium] [--repeats 1] [--case id]');
+  console.error('Usage: node evals/benchmark.mjs run --model <id> [--effort medium] [--repeats 1] [--case id] [--codex <executable>]');
   console.error('   or: node evals/benchmark.mjs report <run-directory>');
   process.exit(2);
 }
@@ -49,6 +49,57 @@ function command(program, args, cwd) {
     throw new Error(`${program} ${args.join(' ')} failed: ${result.error?.message || result.stderr}`);
   }
   return result.stdout.trim();
+}
+
+export function resolveCodex(explicit = process.env.NIXSKILL_CODEX_BIN) {
+  const candidates = [];
+  if (explicit) candidates.push({ executable: explicit, prefixArgs: [], kind: 'native' });
+  else if (process.platform === 'win32') {
+    candidates.push({ executable: 'codex.exe', prefixArgs: [], kind: 'native' });
+    const app = spawnSync('powershell.exe', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      '(Get-AppxPackage -Name OpenAI.Codex | Sort-Object Version -Descending | Select-Object -First 1).InstallLocation',
+    ], { encoding: 'utf8', timeout: 30000, windowsHide: true });
+    const installLocation = app.status === 0 ? app.stdout.trim() : '';
+    if (installLocation) candidates.push({ executable: join(installLocation, 'app', 'resources', 'codex.exe'), prefixArgs: [], kind: 'desktop' });
+    for (const dir of (process.env.PATH || process.env.Path || '').split(delimiter)) {
+      const shim = join(dir, 'codex.cmd');
+      if (dir && existsSync(shim)) candidates.push({ executable: shim, prefixArgs: [], kind: 'npm-shim' });
+    }
+  } else candidates.push({ executable: 'codex', prefixArgs: [], kind: 'native' });
+
+  for (let { executable, prefixArgs, kind } of candidates) {
+    if (extname(executable).toLowerCase() === '.cmd') {
+      let script = null;
+      for (const packageDir of [
+        join(dirname(executable), 'node_modules', '@openai', 'codex'),
+        join(dirname(executable), '..', '@openai', 'codex'),
+      ]) {
+        const manifestPath = join(packageDir, 'package.json');
+        if (!existsSync(manifestPath)) continue;
+        try {
+          const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+          const entry = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.codex;
+          const candidate = entry && resolve(packageDir, entry);
+          if (manifest.name === '@openai/codex' && candidate && existsSync(candidate)) {
+            script = candidate;
+            break;
+          }
+        } catch { /* Try the next standard npm location. */ }
+      }
+      if (!script) {
+        if (explicit) throw new Error(`Invalid @openai/codex package beside ${executable}; pass a native codex.exe path instead.`);
+        continue;
+      }
+      executable = process.execPath;
+      prefixArgs = [script];
+      kind = 'npm';
+    }
+    const result = spawnSync(executable, [...prefixArgs, '--version'], { encoding: 'utf8', timeout: 30000, windowsHide: true });
+    if (result.status === 0) return { executable, prefixArgs, kind, version: result.stdout.trim() };
+    if (explicit) throw new Error(`Codex executable ${executable} could not run: ${result.error?.message || result.stderr || `exit ${result.status}`}`);
+  }
+  throw new Error('Codex CLI was not found. Install it or pass a codex.exe / codex.cmd path with --codex (or NIXSKILL_CODEX_BIN).');
 }
 
 function hashTree(path) {
@@ -225,13 +276,15 @@ function report(runDir) {
 async function run(args) {
   const opts = options(args);
   ensureUncontaminatedBaseline();
+  const codexBin = resolveCodex(opts.codex);
   const selected = opts.case ? cases.filter((item) => item.id === opts.case) : cases;
   const resultsDir = join(evalDir, 'results');
   mkdirSync(resultsDir, { recursive: true });
   const runDir = mkdtempSync(join(resultsDir, 'run-'));
   const data = {
     createdAt: new Date().toISOString(), model: opts.model, effort: opts.effort,
-    codexVersion: command('codex', ['--version'], repoDir),
+    codexVersion: codexBin.version, codexExecutable: codexBin.executable,
+    codexPrefixArgs: codexBin.prefixArgs, codexLaunchKind: codexBin.kind,
     nodeVersion: process.version, gitVersion: command('git', ['--version'], repoDir),
     platform: process.platform, arch: process.arch,
     repoRevision: command('git', ['rev-parse', 'HEAD'], repoDir),
@@ -254,7 +307,8 @@ async function run(args) {
         const prepared = prepareWorkdir(runDir, testCase, variant, repeat);
         console.log(`Running ${prepared.name}...`);
         const tracePath = join(prepared.artifactDir, 'trace.jsonl');
-        const codex = await runProcess('codex', [
+        const codex = await runProcess(codexBin.executable, [
+          ...codexBin.prefixArgs,
           '--ask-for-approval', 'never', 'exec', '--json', '--ephemeral', '--ignore-user-config',
           '--disable', 'hooks',
           '--sandbox', 'workspace-write',
