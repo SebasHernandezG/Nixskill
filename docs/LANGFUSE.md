@@ -4,7 +4,7 @@ Langfuse is useful for observing Codex sessions after Nixskill is installed. Its
 
 ## Set up on Windows for this project
 
-1. Create a [Langfuse Cloud account](https://cloud.langfuse.com) and a project named `Nixskill`. The Hobby plan is [free without a credit card](https://langfuse.com/pricing). In the project settings, create an API key pair. Note the project's region and base URL. Do not send the secret key in chat or commit it.
+1. Create a [Langfuse Cloud account](https://cloud.langfuse.com) and a project named `Nixskill`. The Hobby plan is [free without a credit card](https://langfuse.com/pricing). In the project settings, create an API key pair. For a tracing pilot, the `Application` permission preset is sufficient; choose a finite expiration. Note the project's region and base URL. Do not send the secret key in chat or commit it.
 2. In PowerShell, install the [official Codex tracing plugin](https://langfuse.com/integrations/developer-tools/codex):
 
    ```powershell
@@ -37,6 +37,10 @@ Langfuse is useful for observing Codex sessions after Nixskill is installed. Its
 6. Restart Codex, start a new session in this project, and review and trust the plugin's `Stop` hook if prompted. Send two harmless test messages. In Langfuse, open the project and look for `Codex Turn` under Tracing. The first turn may appear only after the next one completes.
 
 The integration requires Node.js 22 or later and Codex CLI 0.143 or later. Its plugin sends complete Codex transcripts, including prompts, system and developer instructions, tool inputs and outputs, images, and model metadata. It is not a token-counter-only upload. Keep the project-specific configuration limited to sessions whose contents you intend to upload; use synthetic test prompts first. A basic connection test does not prove that `nixskill` was invoked; to check its `skill:nixskill` tag later, install the skill in a separate test project and invoke `$nixskill` there. Avoid installing Nixskill globally before running the local A/B benchmark, which requires an uncontaminated baseline.
+
+### Connection pilot
+
+On 2026-11-18, a single synthetic Codex CLI turn with plugin version 0.4.3 and Codex 0.169.0-alpha.11.1 produced a Langfuse trace in the HIPAA region using a 30-day `Application` key. Langfuse displayed 21,269 input tokens, including 13,568 cached tokens, and 13 output tokens: 21,282 total. These match the local Codex JSONL usage for that turn. The test confirms ingestion and usage accounting for one synthetic session; it does not establish a token saving or verify a `skill:nixskill` tag. The pilot configuration was disabled after verification.
 
 ## Relationship to the A/B benchmark
 
