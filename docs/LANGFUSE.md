@@ -22,23 +22,24 @@ Langfuse is useful for observing Codex sessions after Nixskill is installed. Its
    enabled = true
    ```
 
-4. Create `.codex/langfuse.json` in this repository. Use the base URL for the region selected when you created the account; the US URL below is only an example.
+4. Store credentials in `~/.codex/langfuse.json`, outside this repository and any synced folder. Keep tracing disabled globally. Use the base URL of your actual Langfuse region; the HIPAA URL below is an example.
 
    ```json
    {
-     "enabled": true,
+     "enabled": false,
      "public_key": "pk-lf-REPLACE_LOCALLY",
      "secret_key": "sk-lf-REPLACE_LOCALLY",
-     "base_url": "https://us.cloud.langfuse.com"
+     "base_url": "https://hipaa.cloud.langfuse.com"
    }
    ```
 
-5. Check `git status --short`: both `.codex` files above are ignored by this repository. Restart Codex, start a new session in this project, and review and trust the plugin's `Stop` hook if prompted. Send two harmless test messages. In Langfuse, open the project and look for `Codex Turn` under Tracing. The first turn may appear only after the next one completes.
+5. After reviewing the upload scope below, create `.codex/langfuse.json` in this repository with only `{ "enabled": true }`. Langfuse [resolves configuration](https://langfuse.com/integrations/developer-tools/codex) from global settings, then project settings, then environment variables. The project file enables tracing here while the global file keeps it off elsewhere. Neither project file contains a key. Check `git status --short`: both project `.codex` files are ignored by Git. Git ignore does not prevent OneDrive or other folder sync, which is why credentials must stay outside this repository.
+6. Restart Codex, start a new session in this project, and review and trust the plugin's `Stop` hook if prompted. Send two harmless test messages. In Langfuse, open the project and look for `Codex Turn` under Tracing. The first turn may appear only after the next one completes.
 
-The integration requires Node.js 22 or later and Codex CLI 0.143 or later. Its plugin sends complete Codex transcripts, including prompts, tool inputs and outputs, and model metadata. Keep the project-specific configuration limited to sessions whose contents you intend to upload. A basic connection test does not prove that `nixskill` was invoked; to check its `skill:nixskill` tag later, install the skill in a separate test project and invoke `$nixskill` there. Avoid installing Nixskill globally before running the local A/B benchmark, which requires an uncontaminated baseline.
+The integration requires Node.js 22 or later and Codex CLI 0.143 or later. Its plugin sends complete Codex transcripts, including prompts, system and developer instructions, tool inputs and outputs, images, and model metadata. It is not a token-counter-only upload. Keep the project-specific configuration limited to sessions whose contents you intend to upload; use synthetic test prompts first. A basic connection test does not prove that `nixskill` was invoked; to check its `skill:nixskill` tag later, install the skill in a separate test project and invoke `$nixskill` there. Avoid installing Nixskill globally before running the local A/B benchmark, which requires an uncontaminated baseline.
 
 ## Relationship to the A/B benchmark
 
-`evals/benchmark.mjs` saves local JSONL traces and quality-check results for both variants. It currently runs Codex with `--ephemeral --ignore-user-config`; therefore the Langfuse transcript hook is **not** a verified measurement path for these benchmark runs. Do not label Langfuse dashboard numbers as the Nixskill A/B result unless they can be joined to the exact case, variant, repeat, model, and skill activation. The local report requires all of those checks before showing a token difference.
+`evals/benchmark.mjs` saves local JSONL traces and quality-check results for both variants. It runs Codex with `--ephemeral --ignore-user-config --disable hooks`, so Langfuse is not the measurement path for these benchmark runs. Do not label Langfuse dashboard numbers as the Nixskill A/B result unless they can be joined to the exact case, variant, repeat, model, and skill activation. The local report requires all of those checks before showing a token difference.
 
 Future integration can export validated benchmark results to a Langfuse dataset or experiment. Langfuse's current [experiment data model](https://langfuse.com/docs/evaluation/experiments/data-model) assumes one result per dataset item per experiment, so repeated runs need distinct experiment runs or item identities. Keep the local results as the audit trail when adding that export.

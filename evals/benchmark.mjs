@@ -200,6 +200,7 @@ async function run(args) {
         const tracePath = join(prepared.artifactDir, 'trace.jsonl');
         const codex = await runProcess('codex', [
           '--ask-for-approval', 'never', 'exec', '--json', '--ephemeral', '--ignore-user-config',
+          '--disable', 'hooks',
           '--sandbox', 'workspace-write',
           '--model', opts.model, '--config', `model_reasoning_effort=${opts.effort}`,
           testCase.prompt,
