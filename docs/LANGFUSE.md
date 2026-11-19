@@ -2,11 +2,40 @@
 
 Langfuse is useful for observing Codex sessions after Nixskill is installed. Its [official Codex integration](https://langfuse.com/integrations/developer-tools/codex) records model calls, tool activity, token use, and a `skill:nixskill` tag when the skill is invoked. It can show costs when model usage and a matching price definition are available. Those costs are estimates based on the configured model price, not a statement of what a Codex subscription billed. See [Langfuse token and cost tracking](https://langfuse.com/docs/observability/features/token-and-cost-tracking).
 
-## Setup for real Codex sessions
+## Set up on Windows for this project
 
-Choose Langfuse Cloud or self-hosting and create a project. The official integration currently requires Node.js 22 or later and Codex CLI 0.143 or later. Install and enable the Langfuse Codex tracing plugin using the current commands in the [integration guide](https://langfuse.com/integrations/developer-tools/codex). Configure its `Stop` hook for the project or your user profile. Set `TRACE_TO_LANGFUSE=true`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and the base URL in your local environment. Keep keys out of Git and do not paste them into benchmark cases.
+1. Create a [Langfuse Cloud account](https://cloud.langfuse.com) and a project named `Nixskill`. The Hobby plan is [free without a credit card](https://langfuse.com/pricing). In the project settings, create an API key pair. Note the project's region and base URL. Do not send the secret key in chat or commit it.
+2. In PowerShell, install the [official Codex tracing plugin](https://langfuse.com/integrations/developer-tools/codex):
 
-The plugin sends complete Codex transcripts, including prompts, tool inputs and outputs, and model metadata. Use a dedicated Langfuse project for this work and enable it only for sessions whose contents you intend to upload. Verify a new session in Langfuse before relying on its dashboards.
+   ```powershell
+   codex plugin marketplace add langfuse/codex-observability-plugin
+   codex plugin add tracing@codex-observability-plugin
+   ```
+
+3. In this repository, create `.codex/config.toml` with these entries. If the file already has a `[features]` table, add `hooks = true` there rather than creating a duplicate table.
+
+   ```toml
+   [features]
+   hooks = true
+
+   [plugins."tracing@codex-observability-plugin"]
+   enabled = true
+   ```
+
+4. Create `.codex/langfuse.json` in this repository. Use the base URL for the region selected when you created the account; the US URL below is only an example.
+
+   ```json
+   {
+     "enabled": true,
+     "public_key": "pk-lf-REPLACE_LOCALLY",
+     "secret_key": "sk-lf-REPLACE_LOCALLY",
+     "base_url": "https://us.cloud.langfuse.com"
+   }
+   ```
+
+5. Check `git status --short`: both `.codex` files above are ignored by this repository. Restart Codex, start a new session in this project, and review and trust the plugin's `Stop` hook if prompted. Send two harmless test messages. In Langfuse, open the project and look for `Codex Turn` under Tracing. The first turn may appear only after the next one completes.
+
+The integration requires Node.js 22 or later and Codex CLI 0.143 or later. Its plugin sends complete Codex transcripts, including prompts, tool inputs and outputs, and model metadata. Keep the project-specific configuration limited to sessions whose contents you intend to upload. A basic connection test does not prove that `nixskill` was invoked; to check its `skill:nixskill` tag later, install the skill in a separate test project and invoke `$nixskill` there. Avoid installing Nixskill globally before running the local A/B benchmark, which requires an uncontaminated baseline.
 
 ## Relationship to the A/B benchmark
 

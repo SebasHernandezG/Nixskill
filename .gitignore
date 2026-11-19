@@ -2,3 +2,4 @@ evals/results/
 .env
 .env.*
 .codex/langfuse.json
+.codex/config.toml
