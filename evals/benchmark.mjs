@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, createWriteStream } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync, createWriteStream } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { finished } from 'node:stream/promises';
@@ -51,6 +51,24 @@ function command(program, args, cwd) {
   return result.stdout.trim();
 }
 
+function hashTree(path) {
+  const hash = createHash('sha256');
+  function walk(dir, prefix = '') {
+    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const relative = `${prefix}${entry.name}`;
+      if (entry.isDirectory()) walk(join(dir, entry.name), `${relative}/`);
+      else if (entry.isFile()) {
+        hash.update(relative);
+        hash.update('\0');
+        hash.update(readFileSync(join(dir, entry.name)));
+        hash.update('\0');
+      } else throw new Error(`Unsupported fixture entry: ${relative}`);
+    }
+  }
+  walk(path);
+  return hash.digest('hex');
+}
+
 function prepareWorkdir(runDir, testCase, variant, repeat) {
   const name = `${testCase.id}-${variant}-${repeat}`;
   const workdir = join(runDir, name, 'workspace');
@@ -91,15 +109,23 @@ function runProcess(program, args, { cwd, input, stdoutPath, stderrPath, timeout
 export function traceStats(path) {
   const stats = { input: null, output: null, cached: null, reasoning: null, total: null, commands: 0, skillRead: false, turns: 0 };
   let seenUsage = false;
+  let missingUsage = false;
   for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
     if (!line.trim()) continue;
     let event;
     try { event = JSON.parse(line); } catch { continue; }
-    if (event.type === 'item.completed' && event.item?.type === 'command_execution') stats.commands++;
-    if (event.item?.type === 'command_execution' && /nixskill[\\/]SKILL\.md/i.test(event.item.command || '')) stats.skillRead = true;
+    if (event.type === 'item.completed' && event.item?.type === 'command_execution') {
+      stats.commands++;
+      const item = event.item;
+      if (item.exit_code === 0
+        && /nixskill[\\/]SKILL\.md/i.test(item.command || '')
+        && String(item.aggregated_output || '').includes('Use a small, evidence-led working set.')) {
+        stats.skillRead = true;
+      }
+    }
     if (event.type !== 'turn.completed') continue;
     stats.turns++;
-    if (!event.usage) continue;
+    if (!event.usage) { missingUsage = true; continue; }
     seenUsage = true;
     for (const [key, source] of [
       ['input', event.usage.input_tokens],
@@ -113,6 +139,9 @@ export function traceStats(path) {
   }
   if (seenUsage && stats.total === null && stats.input !== null && stats.output !== null) {
     stats.total = stats.input + stats.output;
+  }
+  if (missingUsage) {
+    for (const key of ['input', 'output', 'cached', 'reasoning', 'total']) stats[key] = null;
   }
   return stats;
 }
@@ -149,29 +178,45 @@ function report(runDir) {
     if (!pairs.has(key)) pairs.set(key, {});
     pairs.get(key)[row.variant] = row;
   }
+  const measuredCases = data.cases.filter((item) => item.shouldTrigger !== false);
+  const controlCases = data.cases.filter((item) => item.shouldTrigger === false);
   const pairedChanges = [];
-  for (const pair of pairs.values()) {
+  let controlPassed = 0;
+  for (const [key, pair] of pairs) {
+    const caseId = key.split('/')[0];
     if (pair.baseline?.status !== 'pass' || pair.nixskill?.status !== 'pass') continue;
+    if (controlCases.some((item) => item.id === caseId)) {
+      if (!pair.nixskill.trace.skillRead) controlPassed++;
+      continue;
+    }
     if (!pair.nixskill.trace.skillRead) continue;
     const baseTokens = pair.baseline.trace.total;
     const skillTokens = pair.nixskill.trace.total;
     if (!Number.isFinite(baseTokens) || baseTokens <= 0 || !Number.isFinite(skillTokens)) continue;
     pairedChanges.push((skillTokens - baseTokens) / baseTokens * 100);
   }
-  const expectedPairs = data.cases.length * (data.repeats ?? Math.max(0, ...data.results.map((row) => row.repeat)));
-  const conclusive = pairedChanges.length === expectedPairs && expectedPairs > 0;
-  const delta = conclusive ? median(pairedChanges).toFixed(1) : null;
+  const repeats = data.repeats ?? Math.max(0, ...data.results.map((row) => row.repeat));
+  const expectedPairs = measuredCases.length * repeats;
+  const expectedControls = controlCases.length * repeats;
+  const allChecksPassed = pairedChanges.length === expectedPairs && expectedPairs > 0 && controlPassed === expectedControls;
+  const balanced = repeats >= 2 && repeats % 2 === 0;
+  const comparisonReady = balanced && expectedControls > 0;
+  const delta = allChecksPassed ? median(pairedChanges).toFixed(1) : null;
   const fmt = (value) => value == null || !Number.isFinite(value) ? 'missing' : Number(value).toLocaleString('en-US');
   const summaryRows = summary.map((row) => `<tr><td>${row.variant}</td><td>${row.passed}/${row.valid}</td><td>${row.runs - row.valid}</td><td>${fmt(row.tokens)}</td><td>${fmt(row.input)}</td><td>${fmt(row.output)}</td><td>${fmt(row.seconds)}</td></tr>`).join('');
   const detailRows = data.results.map((row) => {
     const status = row.status === 'infrastructure_error' ? 'INVALID' : row.status?.toUpperCase() || 'UNKNOWN';
     const css = status === 'PASS' ? 'pass' : 'fail';
-    return `<tr><td>${escapeHtml(row.caseId)}</td><td>${row.variant}</td><td>${row.repeat}</td><td class="${css}">${status}</td><td>${fmt(row.trace.total)}</td><td>${fmt(row.trace.cached)}</td><td>${row.trace.commands}</td><td>${row.variant === 'nixskill' ? (row.trace.skillRead ? 'yes' : 'unverified') : '—'}</td><td>${row.codex.seconds}</td><td><a href="${encodeURIComponent(row.name)}/trace.jsonl">JSONL</a> · <a href="${encodeURIComponent(row.name)}/codex-stderr.txt">stderr</a></td></tr>`;
+    const expected = controlCases.some((item) => item.id === row.caseId) ? 'control' : 'measure';
+    return `<tr><td>${escapeHtml(row.caseId)}</td><td>${expected}</td><td>${row.variant}</td><td>${row.repeat}</td><td class="${css}">${status}</td><td>${fmt(row.trace.total)}</td><td>${fmt(row.trace.cached)}</td><td>${row.trace.commands}</td><td>${row.variant === 'nixskill' ? (row.trace.skillRead ? 'yes' : 'no') : '—'}</td><td>${row.codex.seconds}</td><td><a href="${encodeURIComponent(row.name)}/trace.jsonl">JSONL</a> · <a href="${encodeURIComponent(row.name)}/codex-stderr.txt">stderr</a></td></tr>`;
   }).join('');
+  const checks = `${pairedChanges.length}/${expectedPairs} measured pairs and ${controlPassed}/${expectedControls} negative controls passed activation and quality checks.`;
   const conclusion = delta === null
-    ? `Inconclusive: ${pairedChanges.length}/${expectedPairs} matched pairs passed both checks, reported token use, and showed a Nixskill read.`
-    : `Median paired token change: <strong>${delta}%</strong> across ${expectedPairs} matched pairs.`;
-  const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nixskill A/B benchmark</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:1100px;margin:40px auto;padding:0 20px;color:#17202a;background:#f8fafc}h1{font-size:2rem}h2{margin-top:2rem}table{border-collapse:collapse;width:100%;background:white}th,td{text-align:left;padding:9px 12px;border-bottom:1px solid #dce3e8}th{background:#e9eff4}code{background:#e9eff4;padding:2px 5px}.pass{color:#08733e;font-weight:700}.fail{color:#aa3030;font-weight:700}.note{background:#fff4ce;padding:12px 16px;border-left:4px solid #b88100}a{color:#145c9a}</style><main><h1>Nixskill A/B benchmark</h1><p>Model: <code>${escapeHtml(data.model)}</code> · Effort: <code>${escapeHtml(data.effort)}</code> · CLI: <code>${escapeHtml(data.codexVersion)}</code></p><p class="note">${conclusion} Invalid infrastructure runs are excluded. Missing usage is not zero. This pilot does not establish general performance.</p><h2>Summary</h2><table><thead><tr><th>Variant</th><th>Passed / valid</th><th>Invalid</th><th>Median tokens*</th><th>Median input*</th><th>Median output*</th><th>Median seconds*</th></tr></thead><tbody>${summaryRows}</tbody></table><p>*Descriptive medians for successful runs; the comparison above uses matched pairs only.</p><h2>Individual runs</h2><table><thead><tr><th>Case</th><th>Variant</th><th>Repeat</th><th>Status</th><th>Total tokens</th><th>Cached input</th><th>Commands</th><th>Skill read</th><th>Seconds</th><th>Evidence</th></tr></thead><tbody>${detailRows}</tbody></table><p>Each run also contains <code>visible-test.txt</code>, <code>hidden-check.txt</code>, and a workspace. The hidden check runs after Codex completes.</p></main></html>`;
+    ? `Inconclusive: ${checks}`
+    : comparisonReady
+      ? `Observed median paired token change: <strong>${delta}%</strong> across ${expectedPairs} matched pairs. ${checks}`
+      : `Descriptive pilot: median paired token change <strong>${delta}%</strong>. ${checks} An observed comparison requires an even number of repeats (at least 2) and the negative control; this pilot is not a savings claim.`;
+  const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nixskill A/B benchmark</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:1100px;margin:40px auto;padding:0 20px;color:#17202a;background:#f8fafc}h1{font-size:2rem}h2{margin-top:2rem}table{border-collapse:collapse;width:100%;background:white}th,td{text-align:left;padding:9px 12px;border-bottom:1px solid #dce3e8}th{background:#e9eff4}code{background:#e9eff4;padding:2px 5px}.pass{color:#08733e;font-weight:700}.fail{color:#aa3030;font-weight:700}.note{background:#fff4ce;padding:12px 16px;border-left:4px solid #b88100}a{color:#145c9a}</style><main><h1>Nixskill A/B benchmark</h1><p>Model: <code>${escapeHtml(data.model)}</code> · Effort: <code>${escapeHtml(data.effort)}</code> · CLI: <code>${escapeHtml(data.codexVersion)}</code> · Repeats: ${repeats}</p><p class="note">${conclusion} Invalid infrastructure runs are excluded. Missing usage is not zero. This pilot does not establish general performance.</p><h2>Summary</h2><table><thead><tr><th>Variant</th><th>Passed / valid</th><th>Invalid</th><th>Median tokens*</th><th>Median input*</th><th>Median output*</th><th>Median seconds*</th></tr></thead><tbody>${summaryRows}</tbody></table><p>*Descriptive medians for successful runs; the comparison above uses matched pairs only. Negative controls are excluded from the token change.</p><h2>Individual runs</h2><table><thead><tr><th>Case</th><th>Role</th><th>Variant</th><th>Repeat</th><th>Status</th><th>Total tokens</th><th>Cached input</th><th>Commands</th><th>Skill read</th><th>Seconds</th><th>Evidence</th></tr></thead><tbody>${detailRows}</tbody></table><p>Each run also contains <code>visible-test.txt</code>, <code>hidden-check.txt</code>, and a workspace. The hidden check runs after Codex completes.</p></main></html>`;
   const output = join(runDir, 'report.html');
   writeFileSync(output, html);
   console.log(output);
@@ -187,8 +232,19 @@ async function run(args) {
   const data = {
     createdAt: new Date().toISOString(), model: opts.model, effort: opts.effort,
     codexVersion: command('codex', ['--version'], repoDir),
+    nodeVersion: process.version, gitVersion: command('git', ['--version'], repoDir),
+    platform: process.platform, arch: process.arch,
+    repoRevision: command('git', ['rev-parse', 'HEAD'], repoDir),
+    repoDirty: Boolean(command('git', ['status', '--porcelain'], repoDir)),
+    runnerSha256: createHash('sha256').update(readFileSync(join(evalDir, 'benchmark.mjs'))).digest('hex'),
+    casesSha256: createHash('sha256').update(readFileSync(join(evalDir, 'cases.json'))).digest('hex'),
     skillSha256: createHash('sha256').update(readFileSync(join(skillDir, 'SKILL.md'))).digest('hex'),
-    cases: selected, repeats: opts.repeats, results: [],
+    caseSourceSha256: Object.fromEntries(selected.map((item) => [item.id, hashTree(join(evalDir, 'cases', item.id))])),
+    cases: selected, repeats: opts.repeats,
+    order: Array.from({ length: opts.repeats }, (_, index) => ({
+      repeat: index + 1, variants: index % 2 ? ['nixskill', 'baseline'] : ['baseline', 'nixskill'],
+    })),
+    results: [],
   };
   const resultsPath = join(runDir, 'results.json');
   console.log(`Run directory: ${runDir}`);

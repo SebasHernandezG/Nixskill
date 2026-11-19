@@ -1,14 +1,17 @@
 [
   {
-    "id": "slug",
-    "prompt": "Fix slugify in this JavaScript project. It must lowercase text, keep Unicode letters and digits, and turn each run of whitespace or punctuation into one hyphen, with no hyphen at either end. Preserve the public function name. Run the relevant tests."
+    "id": "message",
+    "shouldTrigger": false,
+    "prompt": "In src/message.js, fix the spelling of the return value of statusLabel from 'Pendng' to 'Pending'. Keep the exported function name and run the relevant test."
   },
   {
     "id": "transfer",
+    "shouldTrigger": true,
     "prompt": "Fix transfer in this JavaScript project. It must accept only positive integer amounts in cents, reject missing or identical accounts and insufficient funds, leave the input balances unchanged on both success and failure, and return a new balances object on success. Preserve the exported API and run the relevant tests."
   },
   {
     "id": "revenue",
+    "shouldTrigger": true,
     "prompt": "Investigate and fix the monthly revenue card. For the selected UTC calendar month, it should show settled order value minus refunds, exclude cancelled orders, never count a refund record twice, and keep existing public exports. Run the relevant tests."
   }
 ]
