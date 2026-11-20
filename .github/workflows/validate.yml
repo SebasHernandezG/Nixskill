@@ -17,4 +17,5 @@ jobs:
         with:
           node-version: '22'
       - run: node --check evals/benchmark.mjs
+      - run: node --check evals/manual.mjs
       - run: node --test evals/benchmark.test.mjs

@@ -34,6 +34,8 @@ The test harness refuses to run if a global `nixskill` installation could contam
 If an environment blocks command execution inside Codex, the runner stops and labels the run as an infrastructure error; those token counts cannot be used as evidence. Run the harness only where both variants can edit and test their isolated workspaces.
 Pull requests run the benchmark's offline tests in GitHub Actions. CI does not launch Codex or claim token savings.
 
+If the Codex CLI is blocked from executing commands by the host policy, use the [manual Codex Desktop pilot](docs/MANUAL_AB.md) only after confirming that Desktop can execute commands and Langfuse captures its task turns. Keep its results separate from CLI runs.
+
 ## Optional Langfuse telemetry
 
 Langfuse can trace day-to-day Codex sessions, including token categories, tool calls, and skill tags. See [the setup and privacy notes](docs/LANGFUSE.md). The local A/B report remains the source of benchmark comparisons: this runner uses ephemeral sessions and ignores user configuration, so it does not assume the Langfuse hook captured those runs.
