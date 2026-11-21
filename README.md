@@ -1,6 +1,15 @@
 # Nixskill
 
+**A focused coding workflow for Codex.**
+
 Nixskill is a Codex skill for programming tasks that need investigation before editing. It chooses a direct path for localized changes and an investigative path when the affected code is unclear. Its instructions focus on finding relevant context, making the requested change, and verifying it.
+
+## At a glance
+
+- Focused searches and bounded context for investigative code changes.
+- Verification that matches the scope of each change.
+- A local A/B benchmark that reports task success and token use separately.
+- Optional Langfuse tracing for observing Codex sessions.
 
 The skill lives in [`skills/nixskill`](skills/nixskill/SKILL.md). To install it for one project, copy that folder to `<project>/.agents/skills/nixskill`. To make it available across projects, copy it to `${CODEX_HOME}/skills/nixskill` or `~/.codex/skills/nixskill` when `CODEX_HOME` is unset. Invoke it explicitly with `$nixskill`, or let Codex select it for matching tasks.
 
