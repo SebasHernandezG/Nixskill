@@ -47,6 +47,8 @@ If the Codex CLI is blocked from executing commands by the host policy, use the 
 
 The [2026-11-21 Desktop pilot](docs/PILOT_2026-11-21.md) did not demonstrate token savings: Nixskill used more task tokens in both revenue pairs, and a later quality check found incomplete solutions. The report includes the exact counts, check timing, and next experiment.
 
+The shorter v2 skill is an unmeasured iteration. Its [preregistered Desktop plan](docs/V2_EXPERIMENT.md) requires successful quality checks on revenue and a transfer holdout, plus a negative control, before treating a token reduction as promising.
+
 ## Optional Langfuse telemetry
 
 Langfuse can trace day-to-day Codex sessions, including token categories, tool calls, and skill tags. See [the setup and privacy notes](docs/LANGFUSE.md). The local A/B report remains the source of benchmark comparisons: this runner uses ephemeral sessions and ignores user configuration, so it does not assume the Langfuse hook captured those runs.

@@ -1,25 +1,24 @@
 ---
 name: nixskill
-description: Use for programming tasks that require investigating code before editing, especially debugging or changes across files. Guide Codex through a focused context, implementation, and verification workflow; skip for simple explanations or obvious one-line edits.
+description: Use for ambiguous or multi-file programming changes that benefit from focused code investigation, scoped edits, and verification. Skip simple explanations and obvious one-line edits.
 ---
 
 # Nixskill
 
-Use a small, evidence-led working set. The goal is a correct change with less repeated reading and fewer unproductive tool calls, not a shorter answer at the expense of correctness.
+Choose the shortest path that resolves uncertainty and verifies the requested change.
 
-## Choose the path
+## Route
 
-- **Direct path:** If the requested change and its location are already clear, inspect the relevant file and nearby test, edit, then run the smallest meaningful check.
-- **Investigative path:** If the behavior, owner, or impact is unclear, establish the expected result and search in widening circles: likely filenames and symbols, their callers and tests, then broader project context only when a concrete question remains. Before editing, identify the affected boundary and how success will be checked. Keep this decision brief; create a plan file only when the task needs one.
+- **Clear location and behavior:** Inspect the relevant file and nearby test, edit, then run a focused check.
+- **Unclear behavior or owner:** Search likely files and symbols, then their callers and tests. Widen only while a concrete question remains. Before editing, identify the expected invariant, its scope across the affected boundary, and a check at that scope.
 
-## Control context while working
+## Control context
 
-- Start with repository instructions and the working-tree state. Preserve unrelated changes.
-- Prefer targeted file and symbol searches and bounded output. Read a whole large file only when its structure matters to the decision.
-- Each additional read should answer a current question. If a search finds no match, change the hypothesis or scope instead of repeating it.
-- After a failed check, inspect the failure and the smallest related code path before widening the search. Do not rerun an unchanged failing command without a reason.
-- Keep any context summary to facts needed for the next decision: target behavior, relevant files, unresolved question, and verification result.
+- Start with repository instructions and working-tree state. Preserve unrelated changes.
+- Once the relevant boundary is known, batch independent reads of its implementation, callers, and tests in one tool round. Split them only if an earlier result changes what needs reading.
+- Keep searches and output bounded. Run a pre-edit test when reproduction clarifies the cause or establishes a needed baseline; otherwise edit from the known invariant and test afterward.
+- On a failed check, inspect the failure and nearest code before widening. Do not rerun an unchanged failing command.
 
-## Finish the task
+## Finish
 
-Implement the requested behavior within its scope. Run a relevant check; expand verification when the changed boundary or failure warrants it. Report what changed, what passed, and any material gap in verification. Never claim token savings from a single run; measure them with a controlled baseline.
+Run the relevant check at the boundary where the invariant must hold. Batch independent post-edit checks when practical; expand verification when risk or a failure warrants it. Report the change, checks, and any material gap.

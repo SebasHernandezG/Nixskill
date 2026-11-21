@@ -12,6 +12,6 @@
   {
     "id": "revenue",
     "shouldTrigger": true,
-    "prompt": "Investigate and fix the monthly revenue card. For the selected UTC calendar month, it should show settled order value minus refunds, exclude cancelled orders, never count a refund record twice, and keep existing public exports. Run the relevant tests."
+    "prompt": "Investigate and fix the monthly revenue card. For the selected UTC calendar month, show settled order value minus refunds and exclude cancelled orders. Count each refund record only once across eligible orders: a shared ID identifies the same record, and for records without IDs, the same object reference identifies the same record. Distinct records without IDs still count separately. Keep existing public exports and run the relevant tests."
   }
 ]

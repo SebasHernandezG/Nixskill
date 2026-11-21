@@ -62,8 +62,10 @@ function initGit(workspace) {
   return command('git', ['rev-parse', 'HEAD'], workspace);
 }
 
-function prepare() {
+function prepare(caseId = 'revenue') {
   checkGlobalSkill();
+  const testCase = cases.find((item) => item.id === caseId);
+  if (!testCase) throw new Error(`Unknown case: ${caseId}. Choose one of: ${cases.map((item) => item.id).join(', ')}`);
   if (String(process.env.TRACE_TO_LANGFUSE || '').toLowerCase() === 'true') {
     throw new Error('TRACE_TO_LANGFUSE=true enables tracing outside this pilot; use project-scoped configuration only.');
   }
@@ -77,7 +79,10 @@ function prepare() {
   addTracing(smoke);
   initGit(smoke);
 
-  const testCase = cases.find((item) => item.id === 'revenue');
+  const checkSource = join(evalDir, 'cases', testCase.id, 'check.mjs');
+  const frozenCheck = join(runDir, 'check-frozen.mjs');
+  const frozenCheckBytes = readFileSync(checkSource);
+  writeFileSync(frozenCheck, frozenCheckBytes);
   const order = ['baseline-1', 'nixskill-1', 'nixskill-2', 'baseline-2'];
   const workspaces = {};
   const initialCommits = {};
@@ -98,6 +103,8 @@ function prepare() {
     runnerSha256: createHash('sha256').update(readFileSync(join(evalDir, 'manual.mjs'))).digest('hex'),
     caseId: testCase.id, prompt: testCase.prompt, model: 'gpt-6.1-sol', effort: 'medium',
     caseSourceSha256: hashTree(join(evalDir, 'cases', testCase.id)),
+    frozenCheck,
+    frozenCheckSha256: createHash('sha256').update(frozenCheckBytes).digest('hex'),
     skillSha256: createHash('sha256').update(readFileSync(join(repoDir, 'skills', 'nixskill', 'SKILL.md'))).digest('hex'),
     skillTreeSha256: hashTree(join(repoDir, 'skills', 'nixskill')),
     smoke,
@@ -120,17 +127,29 @@ function readManifest(runDir) {
 
 function verify(runDir) {
   const manifest = readManifest(runDir);
-  const casePath = join(evalDir, 'cases', manifest.caseId);
-  const sourceHashes = [hashTree(casePath), hashTree(casePath, '\n'), hashTree(casePath, '\r\n')];
-  if (!sourceHashes.includes(manifest.caseSourceSha256)) {
-    throw new Error('Case source changed since preparation; use the original check before interpreting results');
+  let checkPath;
+  if (manifest.frozenCheck && manifest.frozenCheckSha256) {
+    checkPath = resolve(manifest.frozenCheck);
+    if (!checkPath.startsWith(resolve(runDir) + sep)) throw new Error('Frozen check is outside manual run');
+    if (!existsSync(checkPath)
+      || createHash('sha256').update(readFileSync(checkPath)).digest('hex') !== manifest.frozenCheckSha256) {
+      throw new Error('Frozen check changed since preparation; this run is invalid');
+    }
+  } else {
+    // Runs prepared before check freezing still depend on the source checkout.
+    const casePath = join(evalDir, 'cases', manifest.caseId);
+    const sourceHashes = [hashTree(casePath), hashTree(casePath, '\n'), hashTree(casePath, '\r\n')];
+    if (!sourceHashes.includes(manifest.caseSourceSha256)) {
+      throw new Error('Case source changed since preparation; use the original check before interpreting results');
+    }
+    checkPath = join(casePath, 'check.mjs');
   }
   const results = {};
   for (const label of manifest.order) {
     const workspace = manifest.workspaces[label];
     if (!resolve(workspace).startsWith(resolve(runDir) + sep)) throw new Error(`Workspace outside manual run: ${label}`);
     const visible = spawnSync('node', ['--test'], { cwd: workspace, encoding: 'utf8', timeout: 30000, windowsHide: true });
-    const hidden = spawnSync('node', [join(evalDir, 'cases', manifest.caseId, 'check.mjs'), workspace], {
+    const hidden = spawnSync('node', [checkPath, workspace], {
       cwd: workspace, encoding: 'utf8', timeout: 30000, windowsHide: true,
     });
     const skillPath = join(workspace, '.agents', 'skills', 'nixskill');
@@ -168,11 +187,13 @@ function disable(runDir) {
   console.log('Project Langfuse config files set to disabled. Environment variables can override them; verify TRACE_TO_LANGFUSE is not true.');
 }
 
-const [action, path] = process.argv.slice(2);
-if (action === 'prepare' && !path) prepare();
-else if (action === 'verify' && path) verify(resolve(path));
-else if (action === 'disable' && path) disable(resolve(path));
+const [action, ...args] = process.argv.slice(2);
+if (action === 'prepare' && (args.length === 0 || (args.length === 2 && args[0] === '--case'))) {
+  prepare(args[1] || 'revenue');
+}
+else if (action === 'verify' && args.length === 1) verify(resolve(args[0]));
+else if (action === 'disable' && args.length === 1) disable(resolve(args[0]));
 else {
-  console.error('Usage: node evals/manual.mjs prepare | verify <manual-run-directory> | disable <manual-run-directory>');
+  console.error('Usage: node evals/manual.mjs prepare [--case revenue|transfer|message] | verify <manual-run-directory> | disable <manual-run-directory>');
   process.exitCode = 2;
 }

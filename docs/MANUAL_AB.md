@@ -7,10 +7,12 @@ Use this protocol when the automated Codex CLI benchmark cannot execute commands
 From the repository root:
 
 ```powershell
-node evals/manual.mjs prepare
+node evals/manual.mjs prepare --case transfer
 ```
 
-The command prints a directory outside the source repository, under `%LOCALAPPDATA%\Nixskill\manual-runs` on Windows. Its `manifest.json` contains the exact prompt, workspace paths, source hashes, and order. Five separate Git repositories are created: `smoke`, `baseline-1`, `nixskill-1`, `nixskill-2`, and `baseline-2`. All task workspaces start from the same `revenue` fixture. Only the `nixskill-*` workspaces contain `.agents/skills/nixskill`. The runner refuses a globally installed Nixskill because it would contaminate the baseline. Keep each Codex chat rooted in its own workspace; inspect traces for any reads outside that workspace and invalidate affected pairs.
+Choose `revenue`, `transfer`, or `message` after `--case`; omitting the option selects `revenue`. Use `message` as the negative control: its one-line task should not load Nixskill. The command prints a directory outside the source repository, under `%LOCALAPPDATA%\Nixskill\manual-runs` on Windows. Its `manifest.json` contains the exact prompt, workspace paths, source hashes, and order. Five separate Git repositories are created: `smoke`, `baseline-1`, `nixskill-1`, `nixskill-2`, and `baseline-2`. All task workspaces start from the selected case's fixture. Only the `nixskill-*` workspaces contain `.agents/skills/nixskill`. The runner refuses a globally installed Nixskill because it would contaminate the baseline. Keep each Codex chat rooted in its own workspace; inspect traces for any reads outside that workspace and invalidate affected pairs.
+
+The preparer copies the case's hidden `check.mjs` to `check-frozen.mjs` in the run directory and records its SHA-256 hash. `verify` checks that hash and executes the frozen copy, so later repository edits cannot silently change the success criterion for this run. Do not edit or replace the frozen check. The manifest's case source hash records the source at preparation time; later verification relies on the frozen check and each workspace's initial Git commit, since the repository may have evolved. Older runs without this copy still require the original source checkout.
 
 The workspaces contain only synthetic code. Each has project-scoped `.codex/config.toml` and `.codex/langfuse.json` with tracing enabled, but no credentials. The existing global Langfuse config supplies credentials and remains disabled elsewhere. **The Langfuse plugin uploads complete Codex transcripts**, including prompts, system/developer instructions, local paths, tool inputs and outputs, and model metadata. Synthetic fixtures do not guarantee a transcript free of personal metadata. Keep the global pseudonymous `user_id`, keep these chats limited to this test, and do not share raw trace exports or keys. An environment variable such as `TRACE_TO_LANGFUSE=true` can override project config; the preparer refuses that flag in its own environment, and you should check that Desktop is not launched with it either.
 
@@ -42,11 +44,13 @@ After all task chats finish, run:
 node evals/manual.mjs verify "<manual-run-directory>"
 ```
 
-This runs the visible and hidden checks outside Codex, checks that the candidate skill stayed intact and the baseline did not acquire it, and writes `verification.json`. It compares files to the initial fixture commit even if Codex committed its changes, and records later commits and working tree status. Review those changes and public exports as well. The hidden check is outside the task workspace and outside the manual run directory.
+This runs the visible and frozen hidden checks outside Codex, checks that the candidate skill stayed intact and the baseline did not acquire it, and writes `verification.json`. It compares files to the initial fixture commit even if Codex committed its changes, and records later commits and working tree status. Review those changes and public exports as well. The hidden check is outside the task workspaces.
 
 Compare each matched pair (`baseline-1` with `nixskill-1`, then `baseline-2` with `nixskill-2`) only when both pass, both have complete usage, the candidate has observed `skill:nixskill` activation or a successful read of its `SKILL.md`, and the baseline has no such signal. If activation is absent or uncertain, report the pair as inconclusive for attributing a change to Nixskill. Also report all failed, missing, and non-activated runs rather than silently dropping them. The per-pair change is `(Nixskill total - baseline total) / baseline total × 100`, where total is input plus output. Two pairs on one synthetic case remain a pilot, not a general claim about programming tasks or subscription billing. Langfuse cost numbers are estimates based on model prices.
 
-If command execution is blocked in Desktop too, stop the protocol. Do not change sandbox or approval settings just to obtain a favorable measurement.
+For `message`, reverse the activation expectation: both variants should pass without reading Nixskill, and exclude its token difference from a savings claim. A skill read there means the negative control failed.
+
+If command execution is blocked in Desktop too, stop the protocol and run `disable` for its workspaces. Do not change sandbox or approval settings just to obtain a favorable measurement.
 
 After the final trace has appeared and verification is complete, set project tracing to disabled for these workspaces:
 

@@ -23,3 +23,19 @@ const sharedRefundOrders = [
   { id: 'two', status: 'paid', createdAt: '2026-01-04T00:00:00Z', totalCents: 1000, refunds: [sharedRefund] },
 ];
 assert.equal(monthlyRevenue(sharedRefundOrders, 2026, 1), 1900);
+
+const sharedIdOrders = [
+  { id: 'three', status: 'paid', createdAt: '2026-01-05T00:00:00Z', totalCents: 1000,
+    refunds: [{ id: 'global-refund', amountCents: 100 }] },
+  { id: 'four', status: 'paid', createdAt: '2026-01-06T00:00:00Z', totalCents: 1000,
+    refunds: [{ id: 'global-refund', amountCents: 100 }] },
+];
+assert.equal(monthlyRevenue(sharedIdOrders, 2026, 1), 1900);
+
+const distinctNoIdOrders = [
+  { id: 'five', status: 'paid', createdAt: '2026-01-07T00:00:00Z', totalCents: 1000,
+    refunds: [{ amountCents: 100 }] },
+  { id: 'six', status: 'paid', createdAt: '2026-01-08T00:00:00Z', totalCents: 1000,
+    refunds: [{ amountCents: 100 }] },
+];
+assert.equal(monthlyRevenue(distinctNoIdOrders, 2026, 1), 1800);
