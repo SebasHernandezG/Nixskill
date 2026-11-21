@@ -45,6 +45,8 @@ Pull requests run the benchmark's offline tests in GitHub Actions. CI does not l
 
 If the Codex CLI is blocked from executing commands by the host policy, use the [manual Codex Desktop pilot](docs/MANUAL_AB.md) only after confirming that Desktop can execute commands and Langfuse captures its task turns. Keep its results separate from CLI runs.
 
+The [2026-11-21 Desktop pilot](docs/PILOT_2026-11-21.md) did not demonstrate token savings: Nixskill used more task tokens in both revenue pairs, and a later quality check found incomplete solutions. The report includes the exact counts, check timing, and next experiment.
+
 ## Optional Langfuse telemetry
 
 Langfuse can trace day-to-day Codex sessions, including token categories, tool calls, and skill tags. See [the setup and privacy notes](docs/LANGFUSE.md). The local A/B report remains the source of benchmark comparisons: this runner uses ephemeral sessions and ignores user configuration, so it does not assume the Langfuse hook captured those runs.

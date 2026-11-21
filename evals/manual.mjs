@@ -19,7 +19,7 @@ function command(program, args, cwd) {
   return result.stdout.trim();
 }
 
-function hashTree(path) {
+function hashTree(path, newline = null) {
   const hash = createHash('sha256');
   function walk(dir, prefix = '') {
     for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -28,7 +28,8 @@ function hashTree(path) {
       else if (entry.isFile()) {
         hash.update(relative);
         hash.update('\0');
-        hash.update(readFileSync(join(dir, entry.name)));
+        const bytes = readFileSync(join(dir, entry.name));
+        hash.update(newline === null ? bytes : Buffer.from(bytes.toString('utf8').replace(/\r\n|\n/g, newline)));
         hash.update('\0');
       } else throw new Error(`Unsupported fixture entry: ${relative}`);
     }
@@ -119,7 +120,9 @@ function readManifest(runDir) {
 
 function verify(runDir) {
   const manifest = readManifest(runDir);
-  if (hashTree(join(evalDir, 'cases', manifest.caseId)) !== manifest.caseSourceSha256) {
+  const casePath = join(evalDir, 'cases', manifest.caseId);
+  const sourceHashes = [hashTree(casePath), hashTree(casePath, '\n'), hashTree(casePath, '\r\n')];
+  if (!sourceHashes.includes(manifest.caseSourceSha256)) {
     throw new Error('Case source changed since preparation; use the original check before interpreting results');
   }
   const results = {};

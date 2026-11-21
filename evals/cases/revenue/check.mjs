@@ -16,3 +16,10 @@ const orders = [
 assert.equal(monthlyRevenue(orders, 2026, 1), 1000);
 assert.deepEqual(revenueCard(orders, 2026, 1), { title: 'Revenue', value: '$10.00' });
 assert.equal(monthlyRevenue(orders, 2026, 2), 0);
+
+const sharedRefund = { amountCents: 100 };
+const sharedRefundOrders = [
+  { id: 'one', status: 'paid', createdAt: '2026-01-03T00:00:00Z', totalCents: 1000, refunds: [sharedRefund] },
+  { id: 'two', status: 'paid', createdAt: '2026-01-04T00:00:00Z', totalCents: 1000, refunds: [sharedRefund] },
+];
+assert.equal(monthlyRevenue(sharedRefundOrders, 2026, 1), 1900);
