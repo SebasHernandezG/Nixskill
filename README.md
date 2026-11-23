@@ -2,7 +2,7 @@
 
 **A focused coding workflow for Codex.**
 
-**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. In the new synthetic payments task, Nixskill used 43.4% more task tokens while all four solutions passed.
+**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. In the synthetic payments task, Nixskill used 43.4% more task tokens before the skill was shortened and 43.8% more afterward; all eight solutions passed their frozen checks.
 
 Nixskill is a Codex skill for programming tasks with unclear file ownership or behavior across files. It asks Codex to reuse context and stop after a passing check. Explicit targets with clear behavior, single-file edits, text, and configuration changes should proceed without automatic skill selection.
 
@@ -68,6 +68,8 @@ The [optional-scout revenue pilot](docs/OPTIONAL_SCOUT_REVENUE_2026-11-23.md) co
 The synthetic `payments` fixture models a hexagonal retry flow with a response lost after gateway processing. Its visible test covers a first attempt, while a frozen checker verifies recovery, an already stored transaction, distinct payments, and an added or adjusted regression test. It is a controlled benchmark task, not a copy of a real payment repository.
 
 The [matched payments pilot](docs/PAYMENTS_PILOT_2026-11-23.md) passed quality and activation checks in both pairs. Baseline used four model generations in each attempt; Nixskill used five and six. No candidate invoked `scout.mjs`. Its aggregate token use was 43.4% higher, so the current skill should not be promoted as a token-saving tool on this evidence.
+
+The [reduced-skill payments rerun](docs/SLIM_PAYMENTS_PILOT_2026-11-23.md) tested the 15-line skill from `ae7b1b3` in the same synthetic case under a separate frozen run. All four solutions passed, but Nixskill used 43.8% more task tokens and made one or two extra model generations in its pairs. It does not demonstrate savings. The three-case protocol below remains a plan, not a completed validation.
 
 The [next evaluation protocol](docs/NEXT_EVALUATION_PROTOCOL.md) specifies three new cases and a fail-able success gate before any further paid runs. The fixtures and runner extension are pending; this document is a plan, not a new result.
 
