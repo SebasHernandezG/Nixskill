@@ -65,7 +65,7 @@ node evals/stable.mjs report "<run-directory>"
 node evals/stable.mjs disable "<run-directory>"
 ```
 
-The runner rejects a missing or old session, a wrong project, incomplete first-turn token usage, a changed fixture or skill, a second active workspace, and an altered captured snapshot. It uses local Codex JSONL for first-turn tokens and excludes the flush turn. Langfuse's exact token breakdown still needs separate confirmation before a published claim. A turn that delegates to subagents is rejected until their usage can be accounted for. The `message` control never reports a savings percentage.
+The runner rejects a missing or old session, a wrong project, incomplete first-turn token usage, a changed fixture or skill, a second active workspace, and an altered captured snapshot. It uses local Codex JSONL for first-turn tokens and excludes the flush turn. Langfuse's exact token breakdown still needs separate confirmation before a published claim. A turn that delegates to subagents is rejected until their usage can be accounted for. Cases marked `shouldTrigger: false` never report a savings percentage.
 
 If fixture staging, archive, skill isolation, command, or usage checks fail, stop and label the run invalid. Do not substitute a previous run or silently omit its tokens. The new protocol is marked `stable-v1`; results from the earlier five-project protocol remain separate. The prompt now names `work/active`, so the transfer run under this protocol is a new pilot rather than a direct continuation of the preregistered v2 design.
 

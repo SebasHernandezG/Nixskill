@@ -1,6 +1,6 @@
 ---
 name: nixskill
-description: Use for programming changes with uncertain ownership or cross-file behavior that need investigation. Skip explanations and obvious localized edits.
+description: Use only when coding requires discovering affected files or tracing a non-obvious cross-file invariant. Skip clear targets with explicit behavior, even across multiple files.
 ---
 
 # Nixskill
