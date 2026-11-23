@@ -49,6 +49,8 @@ The [2026-11-21 Desktop pilot](docs/PILOT_2026-11-21.md) did not demonstrate tok
 
 The shorter v2 skill has one [measured revenue pilot](docs/V2_REVENUE_2026-11-21.md): all four solutions passed the frozen checks and combined candidate tokens were 6.2% lower, but the two pair effects disagreed. Its [preregistered Desktop plan](docs/V2_EXPERIMENT.md) still requires a transfer holdout and a negative control before treating a token reduction as promising. New Desktop tests can use the [two-project stable runner](docs/TEST_WORKSPACES.md), which keeps the sidebar footprint fixed; its changed workspace layout makes those tests a separate pilot.
 
+The first [two-project transfer pilot](docs/STABLE_TRANSFER_2026-11-23.md) kept both arms to two stable Desktop projects. All four solutions passed, but Nixskill used 2.5% more task tokens in aggregate. This is a separate protocol from the v2 revenue pilot and is not evidence of savings.
+
 ## Optional Langfuse telemetry
 
 Langfuse can trace day-to-day Codex sessions, including token categories, tool calls, and skill tags. See [the setup and privacy notes](docs/LANGFUSE.md). The local A/B report remains the source of benchmark comparisons: this runner uses ephemeral sessions and ignores user configuration, so it does not assume the Langfuse hook captured those runs.
