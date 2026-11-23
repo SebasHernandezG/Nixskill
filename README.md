@@ -4,13 +4,13 @@
 
 **Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. In the new synthetic payments task, Nixskill used 43.4% more task tokens while all four solutions passed.
 
-Nixskill is a Codex skill for programming tasks that need investigation before editing. Automatic selection is intended for unclear code ownership or a non-obvious invariant across files. Clear tasks should proceed directly even if several files may change. If explicitly invoked for a clear task, the skill takes its Direct route.
+Nixskill is a Codex skill for programming tasks with unclear file ownership or behavior across files. It asks Codex to reuse context and stop after a passing check. Explicit targets with clear behavior, single-file edits, text, and configuration changes should proceed without automatic skill selection.
 
-The current skill uses three routes: **Direct** for a clear edit, **Investigate** when ownership or an invariant is unclear, and **Plan** only when dependent changes or a consequential decision require it. It reuses context already read, avoids reopening unchanged documents without a specific need, and limits questions to decisions that cannot be inferred. This takes inspiration from [BMad's right-sized process](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/build/build-a-change.md); Nixskill does not install or depend on BMad. These rules are a hypothesis for reducing extra model rounds, not a measured token saving.
+The skill is intentionally short. Its decision and stop rules take inspiration from [BMad's right-sized process](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/build/build-a-change.md); Nixskill does not install or depend on BMad. The workflow has not demonstrated token savings.
 
 ## At a glance
 
-- Focused searches and bounded context for investigative code changes.
+- Direct edits for clear tasks and a concrete shared fact for unclear cross-file behavior.
 - Verification that matches the scope of each change.
 - A local A/B benchmark that reports task success and token use separately.
 - Optional Langfuse tracing for observing Codex sessions.
@@ -61,13 +61,15 @@ The first [revenue pilot after that gate](docs/GATED_REVENUE_2026-11-23.md) pass
 
 The [stable-v2 revenue pilot](docs/STABLE_V2_REVENUE_2026-11-23.md) tested the stop rule and the shared ignored-Git prompt. Both pairs passed quality and activation checks; Nixskill used 1.0% more task tokens overall. Neither arm made the unnecessary post-test root Git diff call seen in the previous pilot. This is still no measured token saving.
 
-The remaining unmeasured hypothesis targets a full model round: the Investigate route can use a bounded `scout.mjs` command to read code and tests in a small area at once, or return ranked search hits for a larger area. This helper is optional and uses Node.js only when it is already installed; the skill otherwise uses available search and file-reading tools. Offline tests verify its output bounds. Measuring a scout-specific effect requires candidate runs that actually invoke it.
+The optional `scout.mjs` experiment was removed from the distributed skill because the measured agents did not use it. Its source remains in `evals/tools/` for offline research; installing Nixskill requires no Node.js runtime.
 
 The [optional-scout revenue pilot](docs/OPTIONAL_SCOUT_REVENUE_2026-11-23.md) completed that matched run. Both pairs passed quality and activation checks; the aggregate candidate total was 9.4% lower. Neither candidate invoked `scout.mjs`, and the second baseline made one extra generation after a failing pre-edit test. Thus the run does not test the scout hypothesis or establish a reliable saving.
 
 The synthetic `payments` fixture models a hexagonal retry flow with a response lost after gateway processing. Its visible test covers a first attempt, while a frozen checker verifies recovery, an already stored transaction, distinct payments, and an added or adjusted regression test. It is a controlled benchmark task, not a copy of a real payment repository.
 
 The [matched payments pilot](docs/PAYMENTS_PILOT_2026-11-23.md) passed quality and activation checks in both pairs. Baseline used four model generations in each attempt; Nixskill used five and six. No candidate invoked `scout.mjs`. Its aggregate token use was 43.4% higher, so the current skill should not be promoted as a token-saving tool on this evidence.
+
+The [next evaluation protocol](docs/NEXT_EVALUATION_PROTOCOL.md) specifies three new cases and a fail-able success gate before any further paid runs. The fixtures and runner extension are pending; this document is a plan, not a new result.
 
 ## Optional Langfuse telemetry
 

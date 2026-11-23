@@ -1,25 +1,16 @@
 ---
 name: nixskill
-description: Use only when coding requires discovering affected files or tracing a non-obvious cross-file invariant. Skip clear targets with explicit behavior, even across multiple files.
+description: Use for coding tasks with unclear file ownership or cross-file behavior. Skip explicit targets with clear behavior, single-file edits, text, and configuration changes.
 ---
 
 # Nixskill
 
-Choose the least process that resolves the task.
+Choose the smallest workflow that can finish the task.
 
-## Route
-
-- **Direct:** Clear target and behavior. Read the target and closest test once; edit; check.
-- **Investigate:** Unclear owner or cross-file invariant. Read applicable `AGENTS.md`, search the narrowest plausible area, and batch bounded reads of implementation, callers, and tests. When Node is already available, `node <this-skill-directory>/scripts/scout.mjs <target-directory> <search-terms>` can combine discovery and reading; otherwise use available search and file-reading tools. Do not install Node for this skill. Define the invariant and verification boundary; read another file only for a specific unresolved question.
-- **Plan:** Dependent changes or consequential product decisions. Define acceptance checks and order; add artifacts or agents only for a concrete need.
-
-## Context
-
-- Reuse earlier instructions, files, and decisions. Read repository instructions and Git state once as needed; preserve unrelated edits.
-- Do not reread unchanged files without a new question, edit, failure, or stale context. Reopen only needed lines.
-- Batch independent reads, bound output, and widen search only when evidence changes the next step.
-
-## Execute
-
-- Ask only when a required choice cannot be inferred; bundle related questions. Keep updates brief and tied to progress.
-- Use pre-edit tests only for reproduction or a baseline. When tools permit, edit and run the focused check in one model round. After it passes, stop unless a specific risk remains. Skip Git diff/status for ignored work; inspect the nearest cause on failure. Report changes and material gaps.
+- If the target and expected behavior are clear, edit directly and run the closest check. Example: fix a named function's return value and run its test.
+- If ownership or behavior is unclear across files, identify the shared fact before editing. Example: a field renamed by a writer must use the same name in its reader.
+- Make a short plan only when dependent edits or a decision with different external effects require one. Ask once before choosing between those effects.
+- Reuse files and decisions already in context. Reopen a file only after it changes, a check fails, or a specific new question arises.
+- Run the focused check. After it passes, stop unless a concrete risk remains.
+- Skip `git diff` and `git status` when Git ignores the edited files; those commands cannot verify the change.
+- Report what changed, which check passed, and any material gap.

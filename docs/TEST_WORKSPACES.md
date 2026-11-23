@@ -71,7 +71,7 @@ The runner rejects a missing or old session, a wrong project, incomplete first-t
 
 If fixture staging, archive, skill isolation, command, or usage checks fail, stop and label the run invalid. Do not substitute a previous run or silently omit its tokens. New runs use `stable-v2`; the runner still reads frozen `stable-v1` runs. The v2 prompt explains that the outer Git repository ignores `work/active`, so root `git diff` and `git status` cannot verify task edits, and asks the agent to finish after passing relevant tests unless a concrete issue remains. This prompt change makes v2 results separate from earlier pilots; do not compare them as matched repetitions.
 
-The optional `scout.mjs` revision has **not** had a measured A/B run. In its next matched revenue run, record whether each candidate actually invokes the helper, the number of model generations, task success, and first-turn tokens. The hypothesis requires fewer generations and lower total tokens in both pairs without a quality loss; helper use or shorter shell output alone does not establish savings. Separately check the Investigate route in an environment without Node before recommending the skill broadly.
+The optional `scout.mjs` revision was measured on revenue and payments, and neither candidate used it. The helper is now outside the distributed skill in `evals/tools/`. See [the next evaluation protocol](NEXT_EVALUATION_PROTOCOL.md) before running another paid comparison.
 
 ## Why two projects
 

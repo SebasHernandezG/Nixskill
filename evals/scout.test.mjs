@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const scout = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'nixskill', 'scripts', 'scout.mjs');
+const scout = join(dirname(fileURLToPath(import.meta.url)), 'tools', 'scout.mjs');
 
 test('scout reads a small area once and bounds a larger search', () => {
   const root = mkdtempSync(join(tmpdir(), 'nixskill-scout-'));
