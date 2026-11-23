@@ -13,5 +13,10 @@
     "id": "revenue",
     "shouldTrigger": true,
     "prompt": "Investigate and fix the monthly revenue card. For the selected UTC calendar month, show settled order value minus refunds and exclude cancelled orders. Count each refund record only once across eligible orders: a shared ID identifies the same record, and for records without IDs, the same object reference identifies the same record. Distinct records without IDs still count separately. Keep existing public exports and run the relevant tests."
+  },
+  {
+    "id": "payments",
+    "shouldTrigger": true,
+    "prompt": "This JavaScript project uses hexagonal architecture: use cases are in src/application, ports in src/domain/ports, and adapters in src/infrastructure. Investigate the payment retry flow through the controller, use case, repository adapter, and gateway. A gateway may process a payment and then lose its response; a later retry must reuse that logical payment, not create a second gateway charge or transaction row. Retrying a payment whose transaction is already stored must return the existing result without inserting another row. Before editing, identify the participating files and broken invariant, then implement the smallest correction. Add or adjust a focused regression test and run it. Preserve the public repository port contract and unrelated changes. In the final response, summarize the fix, files read, and unverified risks."
   }
 ]

@@ -55,7 +55,7 @@ The shorter v2 skill has one [measured revenue pilot](docs/V2_REVENUE_2026-11-21
 
 The first [two-project transfer pilot](docs/STABLE_TRANSFER_2026-11-23.md) kept both arms to two stable Desktop projects. All four solutions passed, but Nixskill used 2.5% more task tokens in aggregate. This is a separate protocol from the v2 revenue pilot and is not evidence of savings.
 
-The [activation gate revision](docs/ACTIVATION_GATE_2026-11-23.md) narrows automatic skill selection. Transfer now explicitly names its target files and is a negative control alongside `message`; its earlier pilot remains a separate, frozen result. Revenue is the only current investigative case, so another independent case is needed before a cross-task savings claim.
+The [activation gate revision](docs/ACTIVATION_GATE_2026-11-23.md) narrows automatic skill selection. Transfer now explicitly names its target files and is a negative control alongside `message`; its earlier pilot remains a separate, frozen result. The new synthetic `payments` case adds a second investigative task, but it needs its own matched run before it can inform a cross-task claim.
 
 The first [revenue pilot after that gate](docs/GATED_REVENUE_2026-11-23.md) passed all quality and activation checks but used 1.9% more task tokens with Nixskill in aggregate. Its two pair effects disagreed. The clear-task controls have not been rerun, so the gate's exclusion behavior is still unverified.
 
@@ -64,6 +64,8 @@ The [stable-v2 revenue pilot](docs/STABLE_V2_REVENUE_2026-11-23.md) tested the s
 The remaining unmeasured hypothesis targets a full model round: the Investigate route can use a bounded `scout.mjs` command to read code and tests in a small area at once, or return ranked search hits for a larger area. This helper is optional and uses Node.js only when it is already installed; the skill otherwise uses available search and file-reading tools. Offline tests verify its output bounds. Measuring a scout-specific effect requires candidate runs that actually invoke it.
 
 The [optional-scout revenue pilot](docs/OPTIONAL_SCOUT_REVENUE_2026-11-23.md) completed that matched run. Both pairs passed quality and activation checks; the aggregate candidate total was 9.4% lower. Neither candidate invoked `scout.mjs`, and the second baseline made one extra generation after a failing pre-edit test. Thus the run does not test the scout hypothesis or establish a reliable saving.
+
+The synthetic `payments` fixture models a hexagonal retry flow with a response lost after gateway processing. Its visible test covers a first attempt, while a frozen checker verifies recovery, an already stored transaction, distinct payments, and an added or adjusted regression test. It is a controlled benchmark task, not a copy of a real payment repository.
 
 ## Optional Langfuse telemetry
 

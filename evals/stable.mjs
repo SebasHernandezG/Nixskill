@@ -368,6 +368,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     else if (action === 'capture' && args.length === 3 && args[1] === '--thread') capture(args[0], args[2]);
     else if (action === 'report' && args.length === 1) report(args[0]);
     else if (action === 'disable' && args.length === 1) disable(args[0]);
-    else throw new Error('Usage: stable.mjs init | sync-skill | prepare --case revenue|transfer|message | stage <run-dir> | capture <run-dir> --thread <id> | report <run-dir> | disable <run-dir>');
+    else throw new Error('Usage: stable.mjs init | sync-skill | prepare --case revenue|payments|transfer|message | stage <run-dir> | capture <run-dir> --thread <id> | report <run-dir> | disable <run-dir>');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

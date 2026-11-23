@@ -53,6 +53,8 @@ After changing `skills/nixskill`, run `node evals/stable.mjs sync-skill` between
 
 For a new case, run `node evals/stable.mjs prepare --case transfer`. It prints the run directory and the exact prompt for the first slot. Create a **new** Codex chat in the printed existing project. After the task and separate telemetry flush finish, use that chat's thread ID:
 
+Use `--case payments` for the synthetic hexagonal payment retry investigation. It reuses the same two projects; no additional project folders are needed. The frozen checker requires one gateway charge and one transaction after a lost response and retry, reuse of an already stored transaction, distinct charges for distinct payments, and a focused regression test. It also freezes the public repository port and the gateway simulation.
+
 ```powershell
 node evals/stable.mjs capture "<run-directory>" --thread "<chat-uuid>"
 node evals/stable.mjs stage "<run-directory>"
