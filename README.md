@@ -2,7 +2,7 @@
 
 **A focused coding workflow for Codex.**
 
-**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. The next runner revision targets an observed extra model round; its effect has not been measured yet.
+**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. The latest `stable-v2` revenue run passed all checks but used 1.0% more task tokens with Nixskill.
 
 Nixskill is a Codex skill for programming tasks that need investigation before editing. Automatic selection is intended for unclear code ownership or a non-obvious invariant across files. Clear tasks should proceed directly even if several files may change. If explicitly invoked for a clear task, the skill takes its Direct route.
 
@@ -58,6 +58,8 @@ The first [two-project transfer pilot](docs/STABLE_TRANSFER_2026-11-23.md) kept 
 The [activation gate revision](docs/ACTIVATION_GATE_2026-11-23.md) narrows automatic skill selection. Transfer now explicitly names its target files and is a negative control alongside `message`; its earlier pilot remains a separate, frozen result. Revenue is the only current investigative case, so another independent case is needed before a cross-task savings claim.
 
 The first [revenue pilot after that gate](docs/GATED_REVENUE_2026-11-23.md) passed all quality and activation checks but used 1.9% more task tokens with Nixskill in aggregate. Its two pair effects disagreed. The clear-task controls have not been rerun, so the gate's exclusion behavior is still unverified.
+
+The [stable-v2 revenue pilot](docs/STABLE_V2_REVENUE_2026-11-23.md) tested the stop rule and the shared ignored-Git prompt. Both pairs passed quality and activation checks; Nixskill used 1.0% more task tokens overall. Neither arm made the unnecessary post-test root Git diff call seen in the previous pilot. This is still no measured token saving.
 
 ## Optional Langfuse telemetry
 
