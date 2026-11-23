@@ -47,7 +47,7 @@ If the Codex CLI is blocked from executing commands by the host policy, use the 
 
 The [2026-11-21 Desktop pilot](docs/PILOT_2026-11-21.md) did not demonstrate token savings: Nixskill used more task tokens in both revenue pairs, and a later quality check found incomplete solutions. The report includes the exact counts, check timing, and next experiment.
 
-The shorter v2 skill is an unmeasured iteration. Its [preregistered Desktop plan](docs/V2_EXPERIMENT.md) requires successful quality checks on revenue and a transfer holdout, plus a negative control, before treating a token reduction as promising.
+The shorter v2 skill has one [measured revenue pilot](docs/V2_REVENUE_2026-11-21.md): all four solutions passed the frozen checks and combined candidate tokens were 6.2% lower, but the two pair effects disagreed. Its [preregistered Desktop plan](docs/V2_EXPERIMENT.md) still requires a transfer holdout and a negative control before treating a token reduction as promising. Future Desktop runs will use the [two-project workspace plan](docs/TEST_WORKSPACES.md) after its runner is implemented.
 
 ## Optional Langfuse telemetry
 

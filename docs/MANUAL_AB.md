@@ -2,6 +2,8 @@
 
 Use this protocol when the automated Codex CLI benchmark cannot execute commands. It uses synthetic JavaScript fixtures, one fresh Codex Desktop chat per workspace, and Langfuse to observe token usage. It is a separate pilot; do not combine its results with the CLI benchmark.
 
+**Legacy workspace layout:** `prepare` currently makes five new Git workspaces. To avoid adding more Desktop projects, the [two-project layout](TEST_WORKSPACES.md) is the plan for future runs. Its runner is not implemented yet; do not prepare another Desktop case until its reset, snapshot, and isolation checks are in place.
+
 ## Prepare isolated workspaces
 
 From the repository root:
