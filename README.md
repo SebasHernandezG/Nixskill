@@ -4,6 +4,8 @@
 
 Nixskill is a Codex skill for programming tasks that need investigation before editing. It chooses a direct path for localized changes and an investigative path when the affected code is unclear. Its instructions focus on finding relevant context, making the requested change, and verifying it.
 
+The current skill uses three routes: **Direct** for a clear edit, **Investigate** when ownership or an invariant is unclear, and **Plan** only when dependent changes or a consequential decision require it. It reuses context already read, avoids reopening unchanged documents without a specific need, and limits questions to decisions that cannot be inferred. This takes inspiration from [BMad's right-sized process](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/build/build-a-change.md); Nixskill does not install or depend on BMad. These rules are a hypothesis for reducing extra model rounds, not a measured token saving.
+
 ## At a glance
 
 - Focused searches and bounded context for investigative code changes.

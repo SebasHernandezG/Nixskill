@@ -1,24 +1,25 @@
 ---
 name: nixskill
-description: Use for ambiguous or multi-file programming changes that benefit from focused code investigation, scoped edits, and verification. Skip simple explanations and obvious one-line edits.
+description: Use for programming changes with uncertain ownership or cross-file behavior that need focused investigation and verification. Skip explanations and obvious localized edits.
 ---
 
 # Nixskill
 
-Choose the shortest path that resolves uncertainty and verifies the requested change.
+Choose the least process that resolves the task.
 
 ## Route
 
-- **Clear location and behavior:** Inspect the relevant file and nearby test, edit, then run a focused check.
-- **Unclear behavior or owner:** Search likely files and symbols, then their callers and tests. Widen only while a concrete question remains. Before editing, identify the expected invariant, its scope across the affected boundary, and a check at that scope.
+- **Direct:** Clear target and behavior. Read the target and closest test once; edit; check.
+- **Investigate:** Unclear owner or cross-file invariant. Search likely paths or symbols; batch reads of implementation, callers, and tests. Define the invariant and verification boundary.
+- **Plan:** Dependent changes or a consequential product decision. Define acceptance checks and order. Create artifacts or delegate only for a concrete coordination or review need.
 
-## Control context
+## Context
 
-- Start with repository instructions and working-tree state. Preserve unrelated changes.
-- Once the relevant boundary is known, batch independent reads of its implementation, callers, and tests in one tool round. Split them only if an earlier result changes what needs reading.
-- Keep searches and output bounded. Run a pre-edit test when reproduction clarifies the cause or establishes a needed baseline; otherwise edit from the known invariant and test afterward.
-- On a failed check, inspect the failure and nearest code before widening. Do not rerun an unchanged failing command.
+- Reuse instructions, files, and decisions already seen. Read initial repository instructions and Git state once as needed; preserve unrelated edits.
+- Never reread an unchanged document just because another step began. Reopen only needed lines after a change, failure, stale context, or new question.
+- Batch independent reads, bound output, and widen search only when evidence changes the next step.
 
-## Finish
+## Execute
 
-Run the relevant check at the boundary where the invariant must hold. Batch independent post-edit checks when practical; expand verification when risk or a failure warrants it. Report the change, checks, and any material gap.
+- Ask only when a required choice cannot be inferred; bundle related questions. Keep updates brief and tied to progress.
+- Use pre-edit tests only for reproduction or a baseline. Edit, verify at the invariant boundary, and inspect the nearest cause on failure. Stop after the relevant check passes; report the change, checks, and material gaps.

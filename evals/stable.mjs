@@ -96,6 +96,33 @@ function init() {
   console.log(`Open these two Codex projects once:\n${project('baseline')}\n${project('nixskill')}`);
 }
 
+function syncSkill() {
+  globalSkillCheck();
+  if (['baseline', 'nixskill'].some((arm) => existsSync(active(arm)))) {
+    throw new Error('Capture the active workspace before updating the skill');
+  }
+  for (const arm of ['baseline', 'nixskill']) {
+    const config = JSON.parse(readFileSync(join(project(arm), '.codex', 'langfuse.json'), 'utf8'));
+    if (config.enabled) throw new Error('Disable lab tracing before updating the skill');
+  }
+  const source = join(repoDir, 'skills', 'nixskill');
+  const target = join(project('nixskill'), '.agents', 'skills', 'nixskill');
+  if (command('git', ['status', '--porcelain', '--', '.agents/skills/nixskill'], project('nixskill'))) {
+    throw new Error('Candidate skill has uncommitted edits; inspect before syncing');
+  }
+  const sourceFiles = files(source);
+  if (JSON.stringify(sourceFiles) !== JSON.stringify(files(target))) {
+    throw new Error('Skill file set changed; migrate the candidate project explicitly');
+  }
+  if (treeHash(source) === treeHash(target)) { console.log('Candidate skill is already current'); return; }
+  for (const name of sourceFiles) writeFileSync(join(target, name), readFileSync(join(source, name)));
+  command('git', ['add', '--', '.agents/skills/nixskill'], project('nixskill'));
+  command('git', ['-c', 'user.name=Nixskill Benchmark', '-c', 'user.email=benchmark@example.invalid',
+    'commit', '-qm', 'Update project-scoped Nixskill'], project('nixskill'));
+  validateSkill();
+  console.log('Candidate skill updated; baseline remains without Nixskill');
+}
+
 function validateSkill(expected = treeHash(join(repoDir, 'skills', 'nixskill'))) {
   globalSkillCheck();
   if (existsSync(join(project('baseline'), '.agents', 'skills', 'nixskill')) ||
@@ -330,11 +357,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const [action, ...args] = process.argv.slice(2);
   try {
     if (action === 'init' && args.length === 0) init();
+    else if (action === 'sync-skill' && args.length === 0) syncSkill();
     else if (action === 'prepare' && args.length === 2 && args[0] === '--case') prepare(args[1]);
     else if (action === 'stage' && args.length === 1) stage(args[0]);
     else if (action === 'capture' && args.length === 3 && args[1] === '--thread') capture(args[0], args[2]);
     else if (action === 'report' && args.length === 1) report(args[0]);
     else if (action === 'disable' && args.length === 1) disable(args[0]);
-    else throw new Error('Usage: stable.mjs init | prepare --case revenue|transfer|message | stage <run-dir> | capture <run-dir> --thread <id> | report <run-dir> | disable <run-dir>');
+    else throw new Error('Usage: stable.mjs init | sync-skill | prepare --case revenue|transfer|message | stage <run-dir> | capture <run-dir> --thread <id> | report <run-dir> | disable <run-dir>');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

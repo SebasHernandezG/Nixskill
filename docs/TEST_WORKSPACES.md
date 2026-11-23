@@ -49,6 +49,8 @@ Run once to check or create the two lab projects:
 node evals/stable.mjs init
 ```
 
+After changing `skills/nixskill`, run `node evals/stable.mjs sync-skill` between runs. It updates only the candidate project's tracked skill files, refuses an active workspace or enabled tracing, and leaves baseline without Nixskill.
+
 For a new case, run `node evals/stable.mjs prepare --case transfer`. It prints the run directory and the exact prompt for the first slot. Create a **new** Codex chat in the printed existing project. After the task and separate telemetry flush finish, use that chat's thread ID:
 
 ```powershell

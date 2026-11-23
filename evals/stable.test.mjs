@@ -81,6 +81,16 @@ test('the stable lab reuses two projects and snapshots all four slots before reu
     for (const arm of ['baseline', 'nixskill']) {
       assert.deepEqual(JSON.parse(readFileSync(join(dataDir, 'lab', arm, '.codex', 'langfuse.json'))), { enabled: false });
     }
+    const candidateRoot = join(dataDir, 'lab', 'nixskill');
+    const candidateSkill = join(candidateRoot, '.agents', 'skills', 'nixskill', 'SKILL.md');
+    writeFileSync(candidateSkill, 'outdated skill\n');
+    assert.equal(spawnSync('git', ['-C', candidateRoot, 'add', '.agents/skills/nixskill'], { encoding: 'utf8' }).status, 0);
+    assert.equal(spawnSync('git', ['-C', candidateRoot, '-c', 'user.name=Nixskill Benchmark',
+      '-c', 'user.email=benchmark@example.invalid', 'commit', '-qm', 'Simulate previous skill version'],
+    { encoding: 'utf8' }).status, 0);
+    assert.match(cli(env, 'sync-skill'), /updated/);
+    assert.equal(readFileSync(candidateSkill, 'utf8'),
+      readFileSync(join(evalDir, '..', 'skills', 'nixskill', 'SKILL.md'), 'utf8'));
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
