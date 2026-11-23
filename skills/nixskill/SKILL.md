@@ -22,4 +22,4 @@ Choose the least process that resolves the task.
 ## Execute
 
 - Ask only when a required choice cannot be inferred; bundle related questions. Keep updates brief and tied to progress.
-- Use pre-edit tests only for reproduction or a baseline. Verify at the invariant boundary; inspect the nearest cause on failure. Stop after checks pass; report changes and material gaps.
+- Use pre-edit tests only for reproduction or a baseline. When tools permit, edit and run the focused check in one model round. After it passes, stop unless a specific risk remains. Skip Git diff/status for ignored work; inspect the nearest cause on failure. Report changes and material gaps.

@@ -49,7 +49,8 @@ test('the stable lab reuses two projects and snapshots all four slots before reu
     const runDir = output.match(/Run directory: (.+)/)?.[1]?.trim();
     assert.ok(runDir, output);
     const manifest = JSON.parse(readFileSync(join(runDir, 'manifest.json'), 'utf8'));
-    assert.equal(manifest.protocol, 'stable-v1');
+    assert.equal(manifest.protocol, 'stable-v2');
+    assert.match(manifest.prompt, /Root Git diff\/status cannot verify those edits/);
     assert.equal(existsSync(join(dataDir, 'lab', 'baseline', '.agents', 'skills', 'nixskill')), false);
     assert.equal(existsSync(join(dataDir, 'lab', 'nixskill', '.agents', 'skills', 'nixskill', 'SKILL.md')), true);
 
@@ -88,6 +89,10 @@ test('the stable lab reuses two projects and snapshots all four slots before reu
     assert.equal(spawnSync('git', ['-C', candidateRoot, '-c', 'user.name=Nixskill Benchmark',
       '-c', 'user.email=benchmark@example.invalid', 'commit', '-qm', 'Simulate previous skill version'],
     { encoding: 'utf8' }).status, 0);
+    manifest.protocol = 'stable-v1';
+    writeFileSync(join(runDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+    cli(env, 'report', runDir);
+    assert.equal(JSON.parse(readFileSync(join(runDir, 'report.json'), 'utf8')).protocol, 'stable-v1');
     assert.match(cli(env, 'sync-skill'), /updated/);
     assert.equal(readFileSync(candidateSkill, 'utf8'),
       readFileSync(join(evalDir, '..', 'skills', 'nixskill', 'SKILL.md'), 'utf8'));

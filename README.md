@@ -2,6 +2,8 @@
 
 **A focused coding workflow for Codex.**
 
+**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. The next runner revision targets an observed extra model round; its effect has not been measured yet.
+
 Nixskill is a Codex skill for programming tasks that need investigation before editing. Automatic selection is intended for unclear code ownership or a non-obvious invariant across files. Clear tasks should proceed directly even if several files may change. If explicitly invoked for a clear task, the skill takes its Direct route.
 
 The current skill uses three routes: **Direct** for a clear edit, **Investigate** when ownership or an invariant is unclear, and **Plan** only when dependent changes or a consequential decision require it. It reuses context already read, avoids reopening unchanged documents without a specific need, and limits questions to decisions that cannot be inferred. This takes inspiration from [BMad's right-sized process](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/build/build-a-change.md); Nixskill does not install or depend on BMad. These rules are a hypothesis for reducing extra model rounds, not a measured token saving.

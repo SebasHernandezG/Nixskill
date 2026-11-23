@@ -133,15 +133,15 @@ function validateSkill(expected = treeHash(join(repoDir, 'skills', 'nixskill')))
   if (!existsSync(candidate) || treeHash(candidate) !== expected) throw new Error('Candidate skill differs from frozen skill');
 }
 
-function readRun(path) {
+function readRun(path, { requireCurrentSkill = true } = {}) {
   const runDir = assertWithin(path, runsDir);
   const manifest = JSON.parse(readFileSync(join(runDir, 'manifest.json'), 'utf8'));
-  if (manifest.protocol !== 'stable-v1' || resolve(manifest.runDir) !== runDir ||
+  if (!['stable-v1', 'stable-v2'].includes(manifest.protocol) || resolve(manifest.runDir) !== runDir ||
       resolve(manifest.labDir) !== resolve(labDir)) throw new Error('Wrong run or protocol');
   const state = JSON.parse(readFileSync(join(runDir, 'state.json'), 'utf8'));
   if (fileHash(join(runDir, 'check-frozen.mjs')) !== manifest.checkSha256 ||
       treeHash(join(runDir, 'fixture')) !== manifest.fixtureSha256) throw new Error('Frozen case changed');
-  validateSkill(manifest.skillTreeSha256);
+  if (requireCurrentSkill) validateSkill(manifest.skillTreeSha256);
   return { runDir, manifest, state };
 }
 
@@ -176,7 +176,7 @@ function prepare(caseId) {
   cpSync(join(evalDir, 'cases', caseId, 'fixture'), join(runDir, 'fixture'), { recursive: true });
   cpSync(join(evalDir, 'cases', caseId, 'check.mjs'), join(runDir, 'check-frozen.mjs'));
   const manifest = {
-    protocol: 'stable-v1', createdAt: new Date().toISOString(), runDir, labDir,
+    protocol: 'stable-v2', createdAt: new Date().toISOString(), runDir, labDir,
     caseId, shouldTrigger: testCase.shouldTrigger, order,
     repoRevision: command('git', ['rev-parse', 'HEAD'], repoDir),
     repoDirty: Boolean(command('git', ['status', '--porcelain'], repoDir)),
@@ -184,7 +184,7 @@ function prepare(caseId) {
     fixtureSha256: treeHash(join(runDir, 'fixture')),
     checkSha256: fileHash(join(runDir, 'check-frozen.mjs')),
     skillTreeSha256: treeHash(join(repoDir, 'skills', 'nixskill')),
-    prompt: `The JavaScript project is in work/active. Only edit files there. ${testCase.prompt}`,
+    prompt: `The JavaScript project is in work/active, which is ignored by the outer Git repository. Only edit files there. Root Git diff/status cannot verify those edits; run the relevant tests and finish after they pass unless a concrete issue remains. ${testCase.prompt}`,
     flushPrompt: 'Reply exactly NIXSKILL_TELEMETRY_FLUSH.',
     model: 'gpt-6.1-sol', effort: 'medium',
     note: 'One fresh Desktop chat per slot. Capture and move its work before staging the next. This protocol is distinct from the five-project pilot.',
@@ -315,7 +315,7 @@ function capture(path, threadId) {
 }
 
 function report(path) {
-  const { runDir, manifest, state } = readRun(path);
+  const { runDir, manifest, state } = readRun(path, { requireCurrentSkill: false });
   if (state.active || state.completed.length !== order.length || state.completed.some((x, i) => x !== order[i])) {
     throw new Error('Four slots must be captured in the planned order');
   }
@@ -348,7 +348,7 @@ function report(path) {
 }
 
 function disable(path) {
-  const { runDir } = readRun(path);
+  const { runDir } = readRun(path, { requireCurrentSkill: false });
   for (const arm of ['baseline', 'nixskill']) json(join(project(arm), '.codex', 'langfuse.json'), { enabled: false });
   console.log(`Tracing disabled in both lab projects. Run data: ${runDir}`);
 }
