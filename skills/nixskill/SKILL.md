@@ -10,7 +10,7 @@ Choose the least process that resolves the task.
 ## Route
 
 - **Direct:** Clear target and behavior. Read the target and closest test once; edit; check.
-- **Investigate:** Unclear owner or cross-file invariant. After reading this skill, run `node <this-skill-directory>/scripts/scout.mjs <target-directory> <search-terms>` once. In a small area it reads code and tests together; in a larger area it prints bounded search hits. Choose the narrowest plausible target directory. Read applicable `AGENTS.md` if only its path was listed. Define the invariant and verification boundary from the result; read another file only for a specific unresolved question.
+- **Investigate:** Unclear owner or cross-file invariant. Read applicable `AGENTS.md`, search the narrowest plausible area, and batch bounded reads of implementation, callers, and tests. When Node is already available, `node <this-skill-directory>/scripts/scout.mjs <target-directory> <search-terms>` can combine discovery and reading; otherwise use available search and file-reading tools. Do not install Node for this skill. Define the invariant and verification boundary; read another file only for a specific unresolved question.
 - **Plan:** Dependent changes or consequential product decisions. Define acceptance checks and order; add artifacts or agents only for a concrete need.
 
 ## Context
