@@ -55,6 +55,8 @@ The first [two-project transfer pilot](docs/STABLE_TRANSFER_2026-11-23.md) kept 
 
 The [activation gate revision](docs/ACTIVATION_GATE_2026-11-23.md) narrows automatic skill selection. Transfer now explicitly names its target files and is a negative control alongside `message`; its earlier pilot remains a separate, frozen result. Revenue is the only current investigative case, so another independent case is needed before a cross-task savings claim.
 
+The first [revenue pilot after that gate](docs/GATED_REVENUE_2026-11-23.md) passed all quality and activation checks but used 1.9% more task tokens with Nixskill in aggregate. Its two pair effects disagreed. The clear-task controls have not been rerun, so the gate's exclusion behavior is still unverified.
+
 ## Optional Langfuse telemetry
 
 Langfuse can trace day-to-day Codex sessions, including token categories, tool calls, and skill tags. See [the setup and privacy notes](docs/LANGFUSE.md). The local A/B report remains the source of benchmark comparisons: this runner uses ephemeral sessions and ignores user configuration, so it does not assume the Langfuse hook captured those runs.
