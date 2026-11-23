@@ -1,0 +1,21 @@
+name: Validate benchmark
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - run: node --check evals/benchmark.mjs
+      - run: node --check evals/manual.mjs
+      - run: node --test evals/benchmark.test.mjs
