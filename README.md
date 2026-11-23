@@ -2,7 +2,7 @@
 
 **A focused coding workflow for Codex.**
 
-**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. The latest matched revenue run used 9.4% fewer task tokens with Nixskill, but its optional scout was unused and one baseline attempt needed an extra model generation after a failing pre-edit test.
+**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. In the new synthetic payments task, Nixskill used 43.4% more task tokens while all four solutions passed.
 
 Nixskill is a Codex skill for programming tasks that need investigation before editing. Automatic selection is intended for unclear code ownership or a non-obvious invariant across files. Clear tasks should proceed directly even if several files may change. If explicitly invoked for a clear task, the skill takes its Direct route.
 
@@ -66,6 +66,8 @@ The remaining unmeasured hypothesis targets a full model round: the Investigate 
 The [optional-scout revenue pilot](docs/OPTIONAL_SCOUT_REVENUE_2026-11-23.md) completed that matched run. Both pairs passed quality and activation checks; the aggregate candidate total was 9.4% lower. Neither candidate invoked `scout.mjs`, and the second baseline made one extra generation after a failing pre-edit test. Thus the run does not test the scout hypothesis or establish a reliable saving.
 
 The synthetic `payments` fixture models a hexagonal retry flow with a response lost after gateway processing. Its visible test covers a first attempt, while a frozen checker verifies recovery, an already stored transaction, distinct payments, and an added or adjusted regression test. It is a controlled benchmark task, not a copy of a real payment repository.
+
+The [matched payments pilot](docs/PAYMENTS_PILOT_2026-11-23.md) passed quality and activation checks in both pairs. Baseline used four model generations in each attempt; Nixskill used five and six. No candidate invoked `scout.mjs`. Its aggregate token use was 43.4% higher, so the current skill should not be promoted as a token-saving tool on this evidence.
 
 ## Optional Langfuse telemetry
 
