@@ -84,7 +84,11 @@ test('the stable lab reuses two projects and snapshots all four slots before reu
     }
     const candidateRoot = join(dataDir, 'lab', 'nixskill');
     const candidateSkill = join(candidateRoot, '.agents', 'skills', 'nixskill', 'SKILL.md');
+    const candidateScout = join(candidateRoot, '.agents', 'skills', 'nixskill', 'scripts', 'scout.mjs');
+    const obsolete = join(candidateRoot, '.agents', 'skills', 'nixskill', 'obsolete.txt');
     writeFileSync(candidateSkill, 'outdated skill\n');
+    rmSync(candidateScout);
+    writeFileSync(obsolete, 'legacy file\n');
     assert.equal(spawnSync('git', ['-C', candidateRoot, 'add', '.agents/skills/nixskill'], { encoding: 'utf8' }).status, 0);
     assert.equal(spawnSync('git', ['-C', candidateRoot, '-c', 'user.name=Nixskill Benchmark',
       '-c', 'user.email=benchmark@example.invalid', 'commit', '-qm', 'Simulate previous skill version'],
@@ -96,6 +100,9 @@ test('the stable lab reuses two projects and snapshots all four slots before reu
     assert.match(cli(env, 'sync-skill'), /updated/);
     assert.equal(readFileSync(candidateSkill, 'utf8'),
       readFileSync(join(evalDir, '..', 'skills', 'nixskill', 'SKILL.md'), 'utf8'));
+    assert.equal(readFileSync(candidateScout, 'utf8'),
+      readFileSync(join(evalDir, '..', 'skills', 'nixskill', 'scripts', 'scout.mjs'), 'utf8'));
+    assert.equal(existsSync(obsolete), false);
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }

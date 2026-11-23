@@ -61,6 +61,8 @@ The first [revenue pilot after that gate](docs/GATED_REVENUE_2026-11-23.md) pass
 
 The [stable-v2 revenue pilot](docs/STABLE_V2_REVENUE_2026-11-23.md) tested the stop rule and the shared ignored-Git prompt. Both pairs passed quality and activation checks; Nixskill used 1.0% more task tokens overall. Neither arm made the unnecessary post-test root Git diff call seen in the previous pilot. This is still no measured token saving.
 
+The next unmeasured hypothesis targets a full model round: the Investigate route now has a bounded `scout.mjs` command that reads all code and tests in a small area at once, or returns ranked search hits for a larger area. It aims to replace separate list/search/read turns. Offline tests verify its output bounds; a new A/B run is required to learn whether agents use it and whether it actually lowers total tokens.
+
 ## Optional Langfuse telemetry
 
 Langfuse can trace day-to-day Codex sessions, including token categories, tool calls, and skill tags. See [the setup and privacy notes](docs/LANGFUSE.md). The local A/B report remains the source of benchmark comparisons: this runner uses ephemeral sessions and ignores user configuration, so it does not assume the Langfuse hook captured those runs.

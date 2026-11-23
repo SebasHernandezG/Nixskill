@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -111,11 +111,16 @@ function syncSkill() {
     throw new Error('Candidate skill has uncommitted edits; inspect before syncing');
   }
   const sourceFiles = files(source);
-  if (JSON.stringify(sourceFiles) !== JSON.stringify(files(target))) {
-    throw new Error('Skill file set changed; migrate the candidate project explicitly');
-  }
+  const targetFiles = files(target);
   if (treeHash(source) === treeHash(target)) { console.log('Candidate skill is already current'); return; }
-  for (const name of sourceFiles) writeFileSync(join(target, name), readFileSync(join(source, name)));
+  for (const name of targetFiles.filter((name) => !sourceFiles.includes(name))) {
+    rmSync(assertWithin(join(target, name), target));
+  }
+  for (const name of sourceFiles) {
+    const destination = assertWithin(join(target, name), target);
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(destination, readFileSync(join(source, name)));
+  }
   command('git', ['add', '--', '.agents/skills/nixskill'], project('nixskill'));
   command('git', ['-c', 'user.name=Nixskill Benchmark', '-c', 'user.email=benchmark@example.invalid',
     'commit', '-qm', 'Update project-scoped Nixskill'], project('nixskill'));
