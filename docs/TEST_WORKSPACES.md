@@ -4,7 +4,7 @@
 
 Use **two stable Codex Desktop projects**, one baseline and one Nixskill, for future manual A/B runs. Do not add a new Desktop project for every repetition. Keep the experiment outputs outside the Git repository and outside both Desktop projects.
 
-This is the target layout; the current `evals/manual.mjs` still creates five disposable workspaces per run. Do not use its `prepare` command to start another Desktop pilot until the stable-project runner and its checks are implemented and verified.
+`evals/stable.mjs` implements this layout. The older `evals/manual.mjs` still creates five disposable workspaces and is retained only to interpret earlier pilot data. Use the stable runner for new Desktop tests.
 
 ```text
 Nixskill/                           Git source: skill, cases, runner, reports
@@ -19,10 +19,14 @@ Nixskill/                           Git source: skill, cases, runner, reports
     <run-id>/                        not opened as a Codex project
       manifest.json                  case, order, revisions, hashes, settings
       check-frozen.mjs               quality gate frozen before the first chat
-      baseline-1/                    snapshot, chat/trace IDs, usage, verification
-      nixskill-1/
+      baseline-1/                    captured workspace snapshot
+      baseline-1.json                chat ID, local usage, verification
+      nixskill-1/                    next snapshot, and so on
+      nixskill-1.json
       nixskill-2/
+      nixskill-2.json
       baseline-2/
+      baseline-2.json
       report.json
   archives/                           verified ZIPs of completed runs
 ```
@@ -35,9 +39,33 @@ The two projects must have the same model, effort, permissions, hook configurati
 2. **Run one slot:** reset that arm's `work/` to the frozen fixture and verify its hash before starting a fresh Desktop chat. Use the same prompt in both arms. Record the chat and Langfuse trace IDs. Send the telemetry flush as a separate turn and exclude its tokens.
 3. **Freeze the result:** run visible and hidden checks, capture changed files and a complete workspace snapshot, and write the task-turn usage. Confirm that the snapshot and usage exist before reusing that arm's `work/` directory.
 4. Repeat in **baseline-1 → nixskill-1 → nixskill-2 → baseline-2** order. The second use of each arm starts from the same frozen fixture, not from the prior solution. After the fourth slot, calculate pair changes and generate the report.
-5. **Close:** disable project-scoped telemetry, archive the run, verify archive contents, and only then remove disposable working files. Retain the compact report and manifest. Archive the four chats in Codex; keep the two stable projects for later cases.
+5. **Close:** disable project-scoped telemetry, archive the run, and verify archive contents before any later cleanup. Retain the compact report and manifest. Archive the four chats in Codex; keep the two stable projects for later cases.
 
-If a fixture reset, archive, skill isolation, command, or usage check fails, stop and label the run invalid. Do not substitute a previous run or silently omit its tokens. The new protocol will have its own version marker; results from the earlier five-project protocol remain separate.
+## Commands
+
+Run once to check or create the two lab projects:
+
+```powershell
+node evals/stable.mjs init
+```
+
+For a new case, run `node evals/stable.mjs prepare --case transfer`. It prints the run directory and the exact prompt for the first slot. Create a **new** Codex chat in the printed existing project. After the task and separate telemetry flush finish, use that chat's thread ID:
+
+```powershell
+node evals/stable.mjs capture "<run-directory>" --thread "<chat-uuid>"
+node evals/stable.mjs stage "<run-directory>"
+```
+
+Repeat `capture` and `stage` in the printed order; do not call `stage` after the fourth capture. Then:
+
+```powershell
+node evals/stable.mjs report "<run-directory>"
+node evals/stable.mjs disable "<run-directory>"
+```
+
+The runner rejects a missing or old session, a wrong project, incomplete first-turn token usage, a changed fixture or skill, a second active workspace, and an altered captured snapshot. It uses local Codex JSONL for first-turn tokens and excludes the flush turn. Langfuse's exact token breakdown still needs separate confirmation before a published claim. A turn that delegates to subagents is rejected until their usage can be accounted for. The `message` control never reports a savings percentage.
+
+If fixture staging, archive, skill isolation, command, or usage checks fail, stop and label the run invalid. Do not substitute a previous run or silently omit its tokens. The new protocol is marked `stable-v1`; results from the earlier five-project protocol remain separate. The prompt now names `work/active`, so the transfer run under this protocol is a new pilot rather than a direct continuation of the preregistered v2 design.
 
 ## Why two projects
 
