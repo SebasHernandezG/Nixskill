@@ -2,7 +2,7 @@
 
 **A focused coding workflow for Codex.**
 
-**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. The latest `stable-v2` revenue run passed all checks but used 1.0% more task tokens with Nixskill.
+**Status: experimental.** The Desktop pilots below have not demonstrated consistent token savings. The latest matched revenue run used 9.4% fewer task tokens with Nixskill, but its optional scout was unused and one baseline attempt needed an extra model generation after a failing pre-edit test.
 
 Nixskill is a Codex skill for programming tasks that need investigation before editing. Automatic selection is intended for unclear code ownership or a non-obvious invariant across files. Clear tasks should proceed directly even if several files may change. If explicitly invoked for a clear task, the skill takes its Direct route.
 
@@ -61,7 +61,9 @@ The first [revenue pilot after that gate](docs/GATED_REVENUE_2026-11-23.md) pass
 
 The [stable-v2 revenue pilot](docs/STABLE_V2_REVENUE_2026-11-23.md) tested the stop rule and the shared ignored-Git prompt. Both pairs passed quality and activation checks; Nixskill used 1.0% more task tokens overall. Neither arm made the unnecessary post-test root Git diff call seen in the previous pilot. This is still no measured token saving.
 
-The next unmeasured hypothesis targets a full model round: the Investigate route can use a bounded `scout.mjs` command to read code and tests in a small area at once, or return ranked search hits for a larger area. This helper is optional and uses Node.js only when it is already installed; the skill otherwise uses available search and file-reading tools. Offline tests verify its output bounds. A new matched A/B run is still required to learn whether agents use it and whether it lowers total tokens.
+The remaining unmeasured hypothesis targets a full model round: the Investigate route can use a bounded `scout.mjs` command to read code and tests in a small area at once, or return ranked search hits for a larger area. This helper is optional and uses Node.js only when it is already installed; the skill otherwise uses available search and file-reading tools. Offline tests verify its output bounds. Measuring a scout-specific effect requires candidate runs that actually invoke it.
+
+The [optional-scout revenue pilot](docs/OPTIONAL_SCOUT_REVENUE_2026-11-23.md) completed that matched run. Both pairs passed quality and activation checks; the aggregate candidate total was 9.4% lower. Neither candidate invoked `scout.mjs`, and the second baseline made one extra generation after a failing pre-edit test. Thus the run does not test the scout hypothesis or establish a reliable saving.
 
 ## Optional Langfuse telemetry
 
